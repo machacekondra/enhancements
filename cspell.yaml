@@ -89,3 +89,8 @@ words:
   - CAPI
   - igavra
   - Patroni
+  - multus
+  - sriov
+  - dpdk
+  - hugepages
+  - chargeback

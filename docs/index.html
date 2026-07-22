@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCM Architecture - Interactive Diagrams</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+  }
+  header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { font-size: 20px; font-weight: 600; }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+  }
+  .breadcrumb a {
+    color: #2563eb;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .breadcrumb span.sep { color: #999; }
+  .breadcrumb span.current { color: #666; font-weight: 500; }
+  .view {
+    display: none;
+    padding: 24px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .view.active { display: block; }
+  .view h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+    color: #1a1a2e;
+  }
+  .view .subtitle {
+    color: #666;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  svg { display: block; margin: 0 auto; }
+  .clickable { cursor: pointer; }
+  .clickable:hover rect,
+  .clickable:hover path { filter: brightness(0.92); }
+  .clickable:hover .hover-hint { opacity: 1; }
+  .hover-hint {
+    opacity: 0;
+    transition: opacity 0.15s;
+    font-size: 11px;
+    fill: #2563eb;
+  }
+  .steps {
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .step {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin: 16px 0;
+    font-size: 12px;
+    color: #666;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .back-link:hover { text-decoration: underline; }
+  .detail-section {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .detail-section h3 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: #1a1a2e;
+  }
+  table.info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.info-table th {
+    text-align: left;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    font-weight: 600;
+  }
+  table.info-table td {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+  }
+  code {
+    background: #f1f5f9;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: "SF Mono", Consolas, monospace;
+  }
+  .step.clickable { cursor: pointer; transition: border-color 0.15s; }
+  .step.clickable:hover { border-color: #2563eb; }
+  .step-detail-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .step-detail-title .step-num {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  .payload-block {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 6px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 8px 0;
+    white-space: pre;
+  }
+  .payload-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+  .payload-note {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .flow-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .flow-tab {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .flow-tab:hover { color: #1a1a2e; }
+  .flow-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    font-weight: 600;
+  }
+  .st-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding: 0 16px;
+  }
+  .st-open .st-body {
+    max-height: 600px;
+    padding: 12px 16px;
+  }
+  .flow-annotations { display: none; }
+  .flow-annotations.active { display: block; }
+  .flow-steps { display: none; }
+  .flow-steps.active { display: grid; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DCM Architecture</h1>
+</header>
+
+<div class="breadcrumb" id="breadcrumb">
+  <a onclick="showView('overview')">Overview</a>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: OVERVIEW                                                    -->
+<!-- ================================================================ -->
+<div class="view active" id="view-overview">
+  <h2>DCM Placement Overview</h2>
+  <p class="subtitle">Select a flow to see its path through the system. Click numbered steps or components for details.</p>
+
+  <div class="flow-tabs" id="flow-tabs">
+    <button class="flow-tab active" onclick="switchFlow('placement')">User Requests VM</button>
+    <button class="flow-tab" onclick="switchFlow('catalog')">Admin Creates CatalogItem</button>
+    <button class="flow-tab" onclick="switchFlow('agent-reg')">Agent Registration</button>
+    <button class="flow-tab" onclick="switchFlow('agent-cap')">Agent Reports Capabilities</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#dbeafe"></div> Control Plane</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fef3c7"></div> Policy Engine</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#d1fae5"></div> Environment / Agent</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#fce7f3"></div> Service Provider</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#f3e8ff"></div> Messaging</div>
+  </div>
+
+  <svg viewBox="0 0 960 720" width="960" height="720" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+      <marker id="arrow-blue" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+      </marker>
+      <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+        <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.1"/>
+      </filter>
+    </defs>
+
+    <!-- User Actor -->
+    <g transform="translate(60, 200)">
+      <circle cx="0" cy="0" r="12" fill="none" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="12" x2="0" y2="40" stroke="#333" stroke-width="2"/>
+      <line x1="-16" y1="24" x2="16" y2="24" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="40" x2="-12" y2="56" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="40" x2="12" y2="56" stroke="#333" stroke-width="2"/>
+      <text x="0" y="72" text-anchor="middle" font-size="12" font-weight="500">User</text>
+    </g>
+
+    <!-- Admin Actor -->
+    <g transform="translate(380, 30)">
+      <circle cx="0" cy="0" r="12" fill="none" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="12" x2="0" y2="40" stroke="#333" stroke-width="2"/>
+      <line x1="-16" y1="24" x2="16" y2="24" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="40" x2="-12" y2="56" stroke="#333" stroke-width="2"/>
+      <line x1="0" y1="40" x2="12" y2="56" stroke="#333" stroke-width="2"/>
+      <text x="0" y="72" text-anchor="middle" font-size="12" font-weight="500">Admin</text>
+    </g>
+
+    <!-- Self-Service Portal -->
+    <g class="clickable" onclick="showView('portal')">
+      <rect x="110" y="160" width="180" height="110" rx="6" fill="#fff" stroke="#94a3b8" stroke-width="1.5" filter="url(#shadow)"/>
+      <rect x="110" y="160" width="180" height="24" rx="6" fill="#e2e8f0"/>
+      <text x="200" y="176" text-anchor="middle" font-size="11" font-weight="600">Self-Service Portal</text>
+      <rect x="130" y="196" width="140" height="60" rx="4" fill="#dbeafe" stroke="#93c5fd" stroke-width="1"/>
+      <text x="200" y="213" text-anchor="middle" font-size="11" font-weight="600">Fedora VM</text>
+      <text x="200" y="228" text-anchor="middle" font-size="10" fill="#555">+ cpu: 2</text>
+      <text x="200" y="243" text-anchor="middle" font-size="10" fill="#555">+ memory: 1024</text>
+      <text class="hover-hint" x="200" y="280" text-anchor="middle">Click for details</text>
+    </g>
+
+    <!-- Arrow: User -> Portal -->
+    <line x1="76" y1="230" x2="108" y2="220" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="82" y="216" font-size="10" fill="#666">Request</text>
+
+    <!-- Control Plane -->
+    <g>
+      <rect x="320" y="130" width="360" height="200" rx="8" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5" filter="url(#shadow)" opacity="0.4"/>
+      <text x="500" y="150" text-anchor="middle" font-size="13" font-weight="700" fill="#1e40af">Control Plane</text>
+
+      <!-- Catalog Manager (clickable) -->
+      <g class="clickable" onclick="showView('catalog')">
+        <rect x="340" y="162" width="150" height="50" rx="4" fill="#fff" stroke="#93c5fd" stroke-width="1.5"/>
+        <text x="415" y="182" text-anchor="middle" font-size="11" font-weight="600">Catalog Manager</text>
+        <text x="415" y="198" text-anchor="middle" font-size="9" fill="#555">Items &amp; Instances</text>
+        <text class="hover-hint" x="415" y="222" text-anchor="middle">Click for details</text>
+      </g>
+
+      <!-- Placement Manager (clickable) -->
+      <g class="clickable" onclick="showView('placement')">
+        <rect x="340" y="222" width="150" height="50" rx="4" fill="#fff" stroke="#93c5fd" stroke-width="1.5"/>
+        <text x="415" y="242" text-anchor="middle" font-size="11" font-weight="600">Placement Manager</text>
+        <text x="415" y="258" text-anchor="middle" font-size="9" fill="#555">Orchestration &amp; DAG</text>
+        <text class="hover-hint" x="415" y="282" text-anchor="middle">Click for details</text>
+      </g>
+
+      <!-- Policy Engine (clickable) -->
+      <g class="clickable" onclick="showView('policies')">
+        <rect x="510" y="162" width="150" height="50" rx="4" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.5"/>
+        <text x="585" y="182" text-anchor="middle" font-size="11" font-weight="600">Policy Engine</text>
+        <text x="585" y="198" text-anchor="middle" font-size="9" fill="#555">OPA / Rego</text>
+        <text class="hover-hint" x="585" y="222" text-anchor="middle">Click for details</text>
+      </g>
+
+      <!-- SP Resource Manager -->
+      <g class="clickable" onclick="showView('placement')">
+        <rect x="510" y="222" width="150" height="50" rx="4" fill="#fff" stroke="#93c5fd" stroke-width="1.5"/>
+        <text x="585" y="242" text-anchor="middle" font-size="11" font-weight="600">SP Resource Mgr</text>
+        <text x="585" y="258" text-anchor="middle" font-size="9" fill="#555">CloudEvents</text>
+        <text class="hover-hint" x="585" y="282" text-anchor="middle">Click for details</text>
+      </g>
+
+      <!-- Status Consumer -->
+      <g>
+        <rect x="510" y="282" width="150" height="36" rx="4" fill="#fff" stroke="#93c5fd" stroke-width="1"/>
+        <text x="585" y="305" text-anchor="middle" font-size="10" fill="#555">Status Consumer</text>
+      </g>
+
+      <!-- DB -->
+      <g>
+        <ellipse cx="375" cy="300" rx="30" ry="12" fill="#e0e7ff" stroke="#93c5fd" stroke-width="1"/>
+        <rect x="345" y="290" width="60" height="18" fill="#e0e7ff" stroke="#93c5fd" stroke-width="1" stroke-dasharray="0,60,60,0"/>
+        <ellipse cx="375" cy="308" rx="30" ry="12" fill="#e0e7ff" stroke="#93c5fd" stroke-width="1"/>
+        <text x="375" y="302" text-anchor="middle" font-size="9" fill="#555">PostgreSQL</text>
+      </g>
+    </g>
+
+    <!-- Arrow: Portal -> Catalog Manager -->
+    <line x1="290" y1="210" x2="338" y2="190" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Arrow: Admin -> Control Plane -->
+    <line x1="380" y1="100" x2="415" y2="160" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="410" y="128" font-size="10" fill="#666">Configure</text>
+
+    <!-- Arrow: Admin -> Policies -->
+    <line x1="395" y1="100" x2="560" y2="160" stroke="#666" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Internal arrows -->
+    <line x1="415" y1="212" x2="415" y2="220" stroke="#999" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="490" y1="247" x2="508" y2="247" stroke="#999" stroke-width="1" marker-end="url(#arrow)"/>
+    <line x1="490" y1="187" x2="508" y2="187" stroke="#999" stroke-width="1" marker-end="url(#arrow)"/>
+
+    <!-- Policy Examples Box -->
+    <g class="clickable" onclick="showView('policies')">
+      <rect x="720" y="120" width="220" height="120" rx="6" fill="#fffbeb" stroke="#fbbf24" stroke-width="1.5" filter="url(#shadow)"/>
+      <text x="830" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Policies</text>
+
+      <rect x="735" y="150" width="95" height="40" rx="3" fill="#fff" stroke="#fcd34d" stroke-width="1"/>
+      <text x="782" y="165" text-anchor="middle" font-size="9" font-weight="600">Cost Efficiency</text>
+      <text x="782" y="180" text-anchor="middle" font-size="9" fill="#666" font-family="monospace">min(agent.cost)</text>
+
+      <rect x="835" y="150" width="95" height="40" rx="3" fill="#fff" stroke="#fcd34d" stroke-width="1"/>
+      <text x="882" y="165" text-anchor="middle" font-size="9" font-weight="600">Sovereignty</text>
+      <text x="882" y="177" text-anchor="middle" font-size="8" fill="#666" font-family="monospace">user.region==eu</text>
+      <text x="882" y="187" text-anchor="middle" font-size="8" fill="#666" font-family="monospace">-&gt; prod-eu only</text>
+
+      <rect x="735" y="196" width="195" height="32" rx="3" fill="#fef9c3" stroke="#fcd34d" stroke-width="1"/>
+      <text x="832" y="210" text-anchor="middle" font-size="9" fill="#666">Global &gt; Tenant &gt; User hierarchy</text>
+      <text x="832" y="222" text-anchor="middle" font-size="9" fill="#666">Constraints are cumulative</text>
+
+      <text class="hover-hint" x="830" y="250" text-anchor="middle">Click for details</text>
+    </g>
+
+    <!-- Arrow: Policies box -> Policy Engine -->
+    <line x1="718" y1="187" x2="662" y2="187" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+    <!-- NATS JetStream -->
+    <g>
+      <rect x="440" y="380" width="170" height="44" rx="22" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5" filter="url(#shadow)"/>
+      <text x="525" y="406" text-anchor="middle" font-size="12" font-weight="600" fill="#7c3aed">NATS JetStream</text>
+    </g>
+
+    <!-- Arrow: SPRM -> NATS -->
+    <line x1="585" y1="272" x2="545" y2="378" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="580" y="340" font-size="10" fill="#7c3aed">CloudEvents</text>
+
+    <!-- Environment 1: prod-eu-west-1 -->
+    <g class="clickable" onclick="showView('agents')">
+      <rect x="100" y="470" width="320" height="230" rx="8" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5" filter="url(#shadow)" opacity="0.5"/>
+      <text x="260" y="493" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">Environment: prod-eu-west-1</text>
+
+      <!-- Agent -->
+      <rect x="200" y="505" width="120" height="36" rx="4" fill="#fff" stroke="#34d399" stroke-width="1.5"/>
+      <text x="260" y="528" text-anchor="middle" font-size="11" font-weight="600">Agent</text>
+
+      <!-- KubeVirt SP -->
+      <rect x="120" y="565" width="140" height="70" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+      <text x="190" y="584" text-anchor="middle" font-size="10" font-weight="600">KubeVirt SP</text>
+      <text x="190" y="598" text-anchor="middle" font-size="9" fill="#555">cpu: required</text>
+      <text x="190" y="611" text-anchor="middle" font-size="9" fill="#555">memory: required</text>
+      <text x="190" y="624" text-anchor="middle" font-size="9" fill="#555">namespace: required</text>
+
+      <!-- K8s Container SP -->
+      <rect x="270" y="565" width="140" height="70" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+      <text x="340" y="584" text-anchor="middle" font-size="10" font-weight="600">K8s Container SP</text>
+      <text x="340" y="598" text-anchor="middle" font-size="9" fill="#555">cpu: required</text>
+      <text x="340" y="611" text-anchor="middle" font-size="9" fill="#555">memory: required</text>
+      <text x="340" y="624" text-anchor="middle" font-size="9" fill="#555">namespace: required</text>
+
+      <!-- Arrows Agent -> SPs -->
+      <line x1="240" y1="541" x2="200" y2="563" stroke="#666" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="280" y1="541" x2="330" y2="563" stroke="#666" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <text class="hover-hint" x="260" y="660" text-anchor="middle" font-size="11">Click for details</text>
+
+      <!-- cost & service_types label -->
+      <text x="260" y="654" text-anchor="middle" font-size="9" fill="#065f46">cost: medium | service_types: vm, container</text>
+    </g>
+
+    <!-- Environment 2: prod-us-east-1 -->
+    <g class="clickable" onclick="showView('agents')">
+      <rect x="540" y="470" width="320" height="230" rx="8" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5" filter="url(#shadow)" opacity="0.5"/>
+      <text x="700" y="493" text-anchor="middle" font-size="12" font-weight="700" fill="#065f46">Environment: prod-us-east-1</text>
+
+      <!-- Agent -->
+      <rect x="640" y="505" width="120" height="36" rx="4" fill="#fff" stroke="#34d399" stroke-width="1.5"/>
+      <text x="700" y="528" text-anchor="middle" font-size="11" font-weight="600">Agent</text>
+
+      <!-- VMware SP -->
+      <rect x="560" y="565" width="140" height="70" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+      <text x="630" y="584" text-anchor="middle" font-size="10" font-weight="600">VMware SP</text>
+      <text x="630" y="598" text-anchor="middle" font-size="9" fill="#555">cpu: required</text>
+      <text x="630" y="611" text-anchor="middle" font-size="9" fill="#555">memory: required</text>
+      <text x="630" y="624" text-anchor="middle" font-size="9" fill="#555">cluster: required</text>
+
+      <!-- PostgreSQL SP -->
+      <rect x="710" y="565" width="140" height="70" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+      <text x="780" y="584" text-anchor="middle" font-size="10" font-weight="600">PostgreSQL SP</text>
+      <text x="780" y="598" text-anchor="middle" font-size="9" fill="#555">engine: required</text>
+      <text x="780" y="611" text-anchor="middle" font-size="9" fill="#555">version: required</text>
+      <text x="780" y="624" text-anchor="middle" font-size="9" fill="#555">replicas: required</text>
+
+      <!-- Arrows Agent -> SPs -->
+      <line x1="680" y1="541" x2="640" y2="563" stroke="#666" stroke-width="1" marker-end="url(#arrow)"/>
+      <line x1="720" y1="541" x2="770" y2="563" stroke="#666" stroke-width="1" marker-end="url(#arrow)"/>
+
+      <text class="hover-hint" x="700" y="660" text-anchor="middle" font-size="11">Click for details</text>
+
+      <text x="700" y="654" text-anchor="middle" font-size="9" fill="#065f46">cost: low | service_types: vm, database</text>
+    </g>
+
+    <!-- Arrow: NATS -> Agent 1 -->
+    <path d="M 470 424 L 260 503" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+    <text x="340" y="456" font-size="10" fill="#7c3aed" transform="rotate(-14, 340, 456)">deliver request</text>
+
+    <!-- Arrow: NATS -> Agent 2 -->
+    <path d="M 570 424 L 700 503" stroke="#ccc" stroke-width="1.5" fill="none" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+    <text x="660" y="456" font-size="10" fill="#aaa" transform="rotate(14, 660, 456)">not selected</text>
+
+    <!-- Flow: User Requests VM (placement) -->
+    <g id="flow-svg-placement" font-size="11" fill="#2563eb" font-weight="700">
+      <g class="clickable" onclick="showStepDetail('placement',1)"><circle cx="90" cy="208" r="11" fill="#2563eb"/><text x="90" y="212" text-anchor="middle" fill="#fff" font-size="9">1</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',2)"><circle cx="310" cy="195" r="11" fill="#2563eb"/><text x="310" y="199" text-anchor="middle" fill="#fff" font-size="9">2</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',3)"><circle cx="415" cy="215" r="11" fill="#2563eb"/><text x="415" y="219" text-anchor="middle" fill="#fff" font-size="9">3</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',4)"><circle cx="500" cy="183" r="11" fill="#2563eb"/><text x="500" y="187" text-anchor="middle" fill="#fff" font-size="9">4</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',5)"><circle cx="500" cy="247" r="11" fill="#2563eb"/><text x="500" y="251" text-anchor="middle" fill="#fff" font-size="9">5</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',6)"><circle cx="555" cy="340" r="11" fill="#2563eb"/><text x="555" y="344" text-anchor="middle" fill="#fff" font-size="9">6</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',7)"><circle cx="370" cy="470" r="11" fill="#2563eb"/><text x="370" y="474" text-anchor="middle" fill="#fff" font-size="9">7</text></g>
+      <g class="clickable" onclick="showStepDetail('placement',8)"><circle cx="220" cy="555" r="11" fill="#2563eb"/><text x="220" y="559" text-anchor="middle" fill="#fff" font-size="9">8</text></g>
+    </g>
+
+    <!-- Flow: Admin Creates CatalogItem (catalog) -->
+    <g id="flow-svg-catalog" font-size="11" fill="#7c3aed" font-weight="700" style="display:none">
+      <g class="clickable" onclick="showStepDetail('catalog',1)"><circle cx="380" cy="56" r="11" fill="#7c3aed"/><text x="380" y="60" text-anchor="middle" fill="#fff" font-size="9">1</text></g>
+      <g class="clickable" onclick="showStepDetail('catalog',2)"><circle cx="415" cy="168" r="11" fill="#7c3aed"/><text x="415" y="172" text-anchor="middle" fill="#fff" font-size="9">2</text></g>
+      <g class="clickable" onclick="showStepDetail('catalog',3)"><circle cx="200" cy="185" r="11" fill="#7c3aed"/><text x="200" y="189" text-anchor="middle" fill="#fff" font-size="9">3</text></g>
+    </g>
+
+    <!-- Flow: Agent Registration (agent-reg) -->
+    <g id="flow-svg-agent-reg" font-size="11" fill="#059669" font-weight="700" style="display:none">
+      <g class="clickable" onclick="showStepDetail('agent-reg',1)"><circle cx="260" cy="530" r="11" fill="#059669"/><text x="260" y="534" text-anchor="middle" fill="#fff" font-size="9">1</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-reg',2)"><circle cx="190" cy="575" r="11" fill="#059669"/><text x="190" y="579" text-anchor="middle" fill="#fff" font-size="9">2</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-reg',3)"><circle cx="525" cy="398" r="11" fill="#059669"/><text x="525" y="402" text-anchor="middle" fill="#fff" font-size="9">3</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-reg',4)"><circle cx="415" cy="172" r="11" fill="#059669"/><text x="415" y="176" text-anchor="middle" fill="#fff" font-size="9">4</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-reg',5)"><circle cx="700" cy="530" r="11" fill="#059669"/><text x="700" y="534" text-anchor="middle" fill="#fff" font-size="9">5</text></g>
+    </g>
+
+    <!-- Flow: Agent Reports Capabilities (agent-cap) -->
+    <g id="flow-svg-agent-cap" font-size="11" fill="#d97706" font-weight="700" style="display:none">
+      <g class="clickable" onclick="showStepDetail('agent-cap',1)"><circle cx="190" cy="575" r="11" fill="#d97706"/><text x="190" y="579" text-anchor="middle" fill="#fff" font-size="9">1</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-cap',2)"><circle cx="260" cy="530" r="11" fill="#d97706"/><text x="260" y="534" text-anchor="middle" fill="#fff" font-size="9">2</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-cap',3)"><circle cx="415" cy="172" r="11" fill="#d97706"/><text x="415" y="176" text-anchor="middle" fill="#fff" font-size="9">3</text></g>
+      <g class="clickable" onclick="showStepDetail('agent-cap',4)"><circle cx="630" cy="575" r="11" fill="#d97706"/><text x="630" y="579" text-anchor="middle" fill="#fff" font-size="9">4</text></g>
+    </g>
+  </svg>
+
+  <p style="text-align:center; color:#2563eb; font-size:12px; margin-top:8px;">Click any numbered step in the diagram or below to see the request/response details.</p>
+
+  <!-- Flow steps: User Requests VM -->
+  <div class="flow-steps active" id="flow-steps-placement" style="grid-template-columns:1fr 1fr; gap:12px; margin-top:24px;">
+    <div class="step clickable" onclick="showStepDetail('placement',1)"><div class="step-num">1</div><div>User requests a <strong>Fedora VM</strong> from the self-service portal, specifying cpu: 2 and memory: 1024.</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',2)"><div class="step-num">2</div><div><strong>Catalog Manager</strong> resolves the CatalogItem blueprint, validates parameters, and submits the resolved spec.</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',3)"><div class="step-num">3</div><div><strong>Placement Manager</strong> stores the intent, builds a resource DAG, and fetches all healthy agents.</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',4)"><div class="step-num">4</div><div><strong>Policy Engine</strong> evaluates the request through Global &gt; Tenant &gt; User policies, selecting an agent and mutating the spec.</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',5)"><div class="step-num">5</div><div><strong>SP Resource Manager</strong> receives the validated request with the assigned agent.</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',6)"><div class="step-num">6</div><div>SPRM publishes a <strong>CloudEvent</strong> to the selected agent's NATS topic.</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',7)"><div class="step-num">7</div><div><strong>Agent</strong> in prod-eu-west-1 receives the request (prod-us-east-1 is not selected by the sovereignty policy).</div></div>
+    <div class="step clickable" onclick="showStepDetail('placement',8)"><div class="step-num">8</div><div>Agent routes to the <strong>KubeVirt SP</strong>, which provisions the VM. Status flows back asynchronously.</div></div>
+  </div>
+
+  <!-- Flow steps: Admin Creates CatalogItem -->
+  <div class="flow-steps" id="flow-steps-catalog" style="grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:24px;">
+    <div class="step clickable" onclick="showStepDetail('catalog',1)"><div class="step-num" style="background:#7c3aed">1</div><div><strong>Admin</strong> submits a CatalogItem blueprint defining resources, fields with defaults, validation schemas, and dependencies.</div></div>
+    <div class="step clickable" onclick="showStepDetail('catalog',2)"><div class="step-num" style="background:#7c3aed">2</div><div><strong>Catalog Manager</strong> validates service types exist, field paths are valid, JSON Schema constraints are correct, and dependency graph is acyclic.</div></div>
+    <div class="step clickable" onclick="showStepDetail('catalog',3)"><div class="step-num" style="background:#7c3aed">3</div><div>CatalogItem appears in the <strong>Self-Service Portal</strong> for users to instantiate with their own parameter overrides.</div></div>
+  </div>
+
+  <!-- Flow steps: Agent Registration -->
+  <div class="flow-steps" id="flow-steps-agent-reg" style="grid-template-columns:1fr; gap:12px; margin-top:24px; max-width:700px;">
+    <div class="step clickable" onclick="showStepDetail('agent-reg',1)"><div class="step-num" style="background:#059669">1</div><div><strong>Agent starts</strong> in the target environment, loads configuration, and creates three NATS topics (main, retry, cancel).</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-reg',2)"><div class="step-num" style="background:#059669">2</div><div><strong>Embedded SPs register</strong> in-process (KubeVirt, K8s Container, ACM Cluster) based on agent config. Each claims a service type slot.</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-reg',3)"><div class="step-num" style="background:#059669">3</div><div>Agent creates three <strong>NATS topics</strong> for messaging: main (requests), retry (unhealthy holds), cancel (re-routing signals).</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-reg',4)"><div class="step-num" style="background:#059669">4</div><div>Agent <strong>self-registers</strong> with the control plane via POST /api/v1/agents, advertising its environment, service types, cost tier, and topic name.</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-reg',5)"><div class="step-num" style="background:#059669">5</div><div>Agent begins sending periodic <strong>heartbeats</strong> with timestamp and consumer_lag. DCM uses these for health and congestion monitoring.</div></div>
+  </div>
+
+  <!-- Flow steps: Agent Reports Capabilities -->
+  <div class="flow-steps" id="flow-steps-agent-cap" style="grid-template-columns:1fr 1fr; gap:12px; margin-top:24px;">
+    <div class="step clickable" onclick="showStepDetail('agent-cap',1)"><div class="step-num" style="background:#d97706">1</div><div>An <strong>external SP</strong> registers with the agent via POST /api/v1/providers, declaring its service type, endpoint, and metadata.</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-cap',2)"><div class="step-num" style="background:#d97706">2</div><div><strong>Agent</strong> stores the SP registration, adds the new service type to its capability list, and starts health-checking the SP.</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-cap',3)"><div class="step-num" style="background:#d97706">3</div><div>Agent <strong>updates DCM</strong> with its new service_types list via POST /api/v1/agents (idempotent by name).</div></div>
+    <div class="step clickable" onclick="showStepDetail('agent-cap',4)"><div class="step-num" style="background:#d97706">4</div><div>On <strong>SP health changes</strong>, agent updates DCM: Unhealthy keeps the type listed; Unavailable removes it; Recovery re-adds it.</div></div>
+  </div>
+
+  <!-- Step detail panels -->
+  <div id="step-detail-panel" style="display:none; margin-top:16px;">
+    <div class="detail-section" style="border-color:#2563eb; position:relative;">
+      <button onclick="hideStepDetail()" style="position:absolute; top:12px; right:16px; background:none; border:none; font-size:18px; cursor:pointer; color:#999;">&times;</button>
+      <div id="step-detail-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: POLICIES                                                    -->
+<!-- ================================================================ -->
+<div class="view" id="view-policies">
+  <a class="back-link" onclick="showView('overview')">&#8592; Back to Overview</a>
+  <h2>Policy Engine</h2>
+  <p class="subtitle">Policies validate, mutate, and control agent selection for every resource request using embedded OPA/Rego.</p>
+
+  <svg viewBox="0 0 900 520" width="900" height="520" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="pa" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+      <marker id="pa-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+      </marker>
+      <marker id="pa-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+      </marker>
+    </defs>
+
+    <!-- Title -->
+    <text x="450" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Policy Evaluation Chain (Chain of Responsibility)</text>
+
+    <!-- Input -->
+    <rect x="30" y="55" width="160" height="80" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="110" y="75" text-anchor="middle" font-size="11" font-weight="600">Request Input</text>
+    <text x="110" y="92" text-anchor="middle" font-size="9" fill="#555">spec: { service_type, ... }</text>
+    <text x="110" y="105" text-anchor="middle" font-size="9" fill="#555">available_agents: [...]</text>
+    <text x="110" y="118" text-anchor="middle" font-size="9" fill="#555">exclude_agents: [...]</text>
+
+    <line x1="190" y1="95" x2="228" y2="95" stroke="#666" stroke-width="1.5" marker-end="url(#pa)"/>
+
+    <!-- Global Policy -->
+    <rect x="230" y="50" width="180" height="90" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <text x="320" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">Global Policies</text>
+    <text x="320" y="88" text-anchor="middle" font-size="9" fill="#666">Super Admin scope</text>
+    <text x="320" y="102" text-anchor="middle" font-size="9" fill="#555">Priority: sorted ascending</text>
+    <text x="320" y="116" text-anchor="middle" font-size="9" fill="#555">Evaluated FIRST</text>
+    <rect x="232" y="50" width="4" height="90" rx="2" fill="#f59e0b"/>
+
+    <line x1="410" y1="95" x2="448" y2="95" stroke="#666" stroke-width="1.5" marker-end="url(#pa)"/>
+
+    <!-- Tenant Policy -->
+    <rect x="450" y="50" width="180" height="90" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <text x="540" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">Tenant Policies</text>
+    <text x="540" y="88" text-anchor="middle" font-size="9" fill="#666">Tenant Admin scope</text>
+    <text x="540" y="102" text-anchor="middle" font-size="9" fill="#555">Inherits constraints from Global</text>
+    <text x="540" y="116" text-anchor="middle" font-size="9" fill="#555">Cannot unlock Global locks</text>
+    <rect x="452" y="50" width="4" height="90" rx="2" fill="#f59e0b"/>
+
+    <line x1="630" y1="95" x2="668" y2="95" stroke="#666" stroke-width="1.5" marker-end="url(#pa)"/>
+
+    <!-- User Policy -->
+    <rect x="670" y="50" width="180" height="90" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <text x="760" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="#92400e">User Policies</text>
+    <text x="760" y="88" text-anchor="middle" font-size="9" fill="#666">End User scope</text>
+    <text x="760" y="102" text-anchor="middle" font-size="9" fill="#555">Evaluated LAST</text>
+    <text x="760" y="116" text-anchor="middle" font-size="9" fill="#555">Most restricted</text>
+    <rect x="672" y="50" width="4" height="90" rx="2" fill="#f59e0b"/>
+
+    <!-- Each Policy Step Detail -->
+    <text x="450" y="175" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">Each Policy Step</text>
+
+    <g transform="translate(30, 190)">
+      <!-- Step boxes -->
+      <rect x="0" y="0" width="120" height="45" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="60" y="18" text-anchor="middle" font-size="10" font-weight="600">1. Pre-filter</text>
+      <text x="60" y="32" text-anchor="middle" font-size="8" fill="#555">Remove excluded</text>
+      <text x="60" y="42" text-anchor="middle" font-size="8" fill="#555">agents</text>
+
+      <line x1="120" y1="22" x2="138" y2="22" stroke="#666" stroke-width="1" marker-end="url(#pa)"/>
+
+      <rect x="140" y="0" width="120" height="45" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="200" y="18" text-anchor="middle" font-size="10" font-weight="600">2. Evaluate</text>
+      <text x="200" y="32" text-anchor="middle" font-size="8" fill="#555">Run Rego code</text>
+      <text x="200" y="42" text-anchor="middle" font-size="8" fill="#555">against input</text>
+
+      <line x1="260" y1="22" x2="278" y2="22" stroke="#666" stroke-width="1" marker-end="url(#pa)"/>
+
+      <rect x="280" y="0" width="120" height="45" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+      <text x="340" y="18" text-anchor="middle" font-size="10" font-weight="600">3. Reject?</text>
+      <text x="340" y="32" text-anchor="middle" font-size="8" fill="#555">If rejected=true</text>
+      <text x="340" y="42" text-anchor="middle" font-size="8" fill="#dc2626">ABORT (fail-fast)</text>
+
+      <line x1="400" y1="22" x2="418" y2="22" stroke="#666" stroke-width="1" marker-end="url(#pa)"/>
+
+      <rect x="420" y="0" width="120" height="45" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="480" y="18" text-anchor="middle" font-size="10" font-weight="600">4. Validate</text>
+      <text x="480" y="32" text-anchor="middle" font-size="8" fill="#555">Check constraints</text>
+      <text x="480" y="42" text-anchor="middle" font-size="8" fill="#555">&amp; patch spec</text>
+
+      <line x1="540" y1="22" x2="558" y2="22" stroke="#666" stroke-width="1" marker-end="url(#pa)"/>
+
+      <rect x="560" y="0" width="120" height="45" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="620" y="18" text-anchor="middle" font-size="10" font-weight="600">5. Select Agent</text>
+      <text x="620" y="32" text-anchor="middle" font-size="8" fill="#555">Validate against</text>
+      <text x="620" y="42" text-anchor="middle" font-size="8" fill="#555">agent_constraints</text>
+
+      <line x1="680" y1="22" x2="698" y2="22" stroke="#666" stroke-width="1" marker-end="url(#pa)"/>
+
+      <rect x="700" y="0" width="120" height="45" rx="4" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+      <text x="760" y="18" text-anchor="middle" font-size="10" font-weight="600">6. Accumulate</text>
+      <text x="760" y="32" text-anchor="middle" font-size="8" fill="#555">Merge constraints</text>
+      <text x="760" y="42" text-anchor="middle" font-size="8" fill="#555">for next policy</text>
+    </g>
+
+    <!-- Example scenario -->
+    <text x="450" y="280" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">Example: Fedora VM Placement</text>
+
+    <!-- Global Policy Example -->
+    <rect x="30" y="295" width="270" height="100" rx="6" fill="#fff" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect x="32" y="295" width="4" height="100" rx="2" fill="#f59e0b"/>
+    <text x="165" y="315" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Step 1: Global Policy</text>
+    <text x="165" y="335" text-anchor="middle" font-size="10" fill="#555">Patch: billing_tag = "engineering"</text>
+    <text x="165" y="350" text-anchor="middle" font-size="10" fill="#555">Constraint: billing_tag is <tspan font-weight="600" fill="#dc2626">immutable</tspan></text>
+    <text x="165" y="370" text-anchor="middle" font-size="10" fill="#555">Agent constraint: none</text>
+    <text x="165" y="385" text-anchor="middle" font-size="10" fill="#16a34a" font-weight="600">PASS</text>
+
+    <line x1="300" y1="345" x2="328" y2="345" stroke="#16a34a" stroke-width="1.5" marker-end="url(#pa-green)"/>
+
+    <!-- Tenant Policy Example -->
+    <rect x="330" y="295" width="270" height="100" rx="6" fill="#fff" stroke="#f59e0b" stroke-width="1.5"/>
+    <rect x="332" y="295" width="4" height="100" rx="2" fill="#f59e0b"/>
+    <text x="465" y="315" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Step 2: Tenant Policy (Sovereignty)</text>
+    <text x="465" y="335" text-anchor="middle" font-size="10" fill="#555">user.region == eu</text>
+    <text x="465" y="350" text-anchor="middle" font-size="10" fill="#555">agent_constraint: env = prod-eu-*</text>
+    <text x="465" y="365" text-anchor="middle" font-size="10" fill="#555">prod-eu-agent <tspan fill="#16a34a">&#x2713;</tspan> | prod-us-agent <tspan fill="#dc2626">&#x2717;</tspan></text>
+    <text x="465" y="385" text-anchor="middle" font-size="10" fill="#16a34a" font-weight="600">PASS (agent filtered)</text>
+
+    <line x1="600" y1="345" x2="628" y2="345" stroke="#16a34a" stroke-width="1.5" marker-end="url(#pa-green)"/>
+
+    <!-- Output -->
+    <rect x="630" y="295" width="240" height="100" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+    <text x="750" y="315" text-anchor="middle" font-size="11" font-weight="700" fill="#065f46">Policy Result</text>
+    <text x="750" y="338" text-anchor="middle" font-size="10" fill="#555">rejected: <tspan font-weight="600" fill="#16a34a">false</tspan></text>
+    <text x="750" y="355" text-anchor="middle" font-size="10" fill="#555">selected_agent: <tspan font-weight="600">prod-eu-agent</tspan></text>
+    <text x="750" y="372" text-anchor="middle" font-size="10" fill="#555">patch: { billing_tag: "engineering" }</text>
+    <text x="750" y="389" text-anchor="middle" font-size="10" fill="#555">constraints: { billing_tag: immutable }</text>
+
+    <!-- Conflict example -->
+    <rect x="30" y="420" width="840" height="85" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="450" y="442" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">Constraint Conflict Example</text>
+    <text x="450" y="462" text-anchor="middle" font-size="10" fill="#555">Global policy sets billing_tag = "engineering" and marks it <tspan font-weight="600">immutable</tspan>.</text>
+    <text x="450" y="478" text-anchor="middle" font-size="10" fill="#555">A User policy attempts to patch billing_tag = "marketing".</text>
+    <text x="450" y="494" text-anchor="middle" font-size="10" fill="#dc2626" font-weight="600">Result: ABORT - Policy Conflict Error. Lower-level policy cannot override higher-level constraint.</text>
+  </svg>
+
+  <div class="detail-section">
+    <h3>Policy Outputs</h3>
+    <table class="info-table">
+      <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>rejected</code></td><td>boolean</td><td>If true, request is denied immediately (406 response)</td></tr>
+        <tr><td><code>rejection_reason</code></td><td>string</td><td>Human-readable reason for rejection</td></tr>
+        <tr><td><code>selected_agent</code></td><td>string</td><td>Name of the chosen agent</td></tr>
+        <tr><td><code>agent_constraints</code></td><td>object</td><td>Allow-lists and patterns restricting agent selection for subsequent policies</td></tr>
+        <tr><td><code>patch</code></td><td>object</td><td>Mutations to apply to the request spec</td></tr>
+        <tr><td><code>constraints</code></td><td>object</td><td>JSON Schema constraints that lock fields for subsequent policies</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-section">
+    <h3>Policy Management API</h3>
+    <table class="info-table">
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/api/v1/policies</code></td><td>Create policy (compiles Rego at creation time)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/v1/policies</code></td><td>List all policies</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/v1/policies/{id}</code></td><td>Get specific policy</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/api/v1/policies/{id}</code></td><td>Update policy (name/type immutable)</td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/api/v1/policies/{id}</code></td><td>Delete policy</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: PLACEMENT                                                   -->
+<!-- ================================================================ -->
+<div class="view" id="view-placement">
+  <a class="back-link" onclick="showView('overview')">&#8592; Back to Overview</a>
+  <h2>Placement Manager</h2>
+  <p class="subtitle">Orchestrates resource provisioning: stores intent, builds DAGs, coordinates policy evaluation, manages retries and re-routing.</p>
+
+  <svg viewBox="0 0 900 500" width="900" height="500" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="pla" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+      <marker id="pla-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+      </marker>
+      <marker id="pla-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+      </marker>
+      <marker id="pla-orange" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#ea580c"/>
+      </marker>
+    </defs>
+
+    <text x="450" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Service Creation Flow</text>
+
+    <!-- Flow boxes -->
+    <rect x="30" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="95" y="72" text-anchor="middle" font-size="10" font-weight="600">Receive Request</text>
+    <text x="95" y="86" text-anchor="middle" font-size="8" fill="#555">POST /api/v1/</text>
+    <text x="95" y="96" text-anchor="middle" font-size="8" fill="#555">resources</text>
+
+    <line x1="160" y1="77" x2="178" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#pla)"/>
+
+    <rect x="180" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="245" y="72" text-anchor="middle" font-size="10" font-weight="600">Store Intent</text>
+    <text x="245" y="86" text-anchor="middle" font-size="8" fill="#555">Placement DB</text>
+    <text x="245" y="96" text-anchor="middle" font-size="8" fill="#555">(audit + rehydration)</text>
+
+    <line x1="310" y1="77" x2="328" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#pla)"/>
+
+    <rect x="330" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="395" y="72" text-anchor="middle" font-size="10" font-weight="600">Fetch Agents</text>
+    <text x="395" y="86" text-anchor="middle" font-size="8" fill="#555">Healthy + non-congested</text>
+    <text x="395" y="96" text-anchor="middle" font-size="8" fill="#555">+ supports service type</text>
+
+    <line x1="460" y1="77" x2="478" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#pla)"/>
+
+    <g class="clickable" onclick="showView('policies')">
+      <rect x="480" y="50" width="130" height="55" rx="6" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="545" y="72" text-anchor="middle" font-size="10" font-weight="600">Policy Engine</text>
+      <text x="545" y="86" text-anchor="middle" font-size="8" fill="#555">Validate + mutate</text>
+      <text x="545" y="96" text-anchor="middle" font-size="8" fill="#555">+ select agent</text>
+      <text class="hover-hint" x="545" y="116" text-anchor="middle">Click for details</text>
+    </g>
+
+    <!-- Reject path -->
+    <line x1="545" y1="105" x2="545" y2="135" stroke="#dc2626" stroke-width="1.5" marker-end="url(#pla-red)"/>
+    <rect x="485" y="137" width="120" height="30" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+    <text x="545" y="157" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">Rejected (406)</text>
+
+    <!-- Approve path -->
+    <line x1="610" y1="77" x2="628" y2="77" stroke="#16a34a" stroke-width="1.5" marker-end="url(#pla-green)"/>
+
+    <rect x="630" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="695" y="72" text-anchor="middle" font-size="10" font-weight="600">Store Validated</text>
+    <text x="695" y="86" text-anchor="middle" font-size="8" fill="#555">agent_name assigned</text>
+    <text x="695" y="96" text-anchor="middle" font-size="8" fill="#555">spec mutated</text>
+
+    <line x1="760" y1="77" x2="778" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#pla)"/>
+
+    <rect x="780" y="50" width="100" height="55" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="830" y="72" text-anchor="middle" font-size="10" font-weight="600">SPRM</text>
+    <text x="830" y="86" text-anchor="middle" font-size="8" fill="#555">Publish</text>
+    <text x="830" y="96" text-anchor="middle" font-size="8" fill="#555">CloudEvent</text>
+
+    <!-- DAG Section -->
+    <text x="200" y="190" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">DAG-Based Orchestration (Multi-Tier Apps)</text>
+
+    <!-- DAG nodes -->
+    <rect x="50" y="210" width="120" height="44" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="110" y="228" text-anchor="middle" font-size="10" font-weight="600">Database</text>
+    <text x="110" y="244" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="600">Level 0</text>
+
+    <rect x="200" y="210" width="120" height="44" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="260" y="228" text-anchor="middle" font-size="10" font-weight="600">Cache</text>
+    <text x="260" y="244" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="600">Level 0</text>
+
+    <rect x="125" y="280" width="120" height="44" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="185" y="298" text-anchor="middle" font-size="10" font-weight="600">Application</text>
+    <text x="185" y="314" text-anchor="middle" font-size="9" fill="#ea580c" font-weight="600">Level 1</text>
+
+    <rect x="125" y="350" width="120" height="44" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="185" y="368" text-anchor="middle" font-size="10" font-weight="600">Load Balancer</text>
+    <text x="185" y="384" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">Level 2</text>
+
+    <line x1="130" y1="254" x2="160" y2="278" stroke="#666" stroke-width="1" marker-end="url(#pla)"/>
+    <line x1="240" y1="254" x2="210" y2="278" stroke="#666" stroke-width="1" marker-end="url(#pla)"/>
+    <line x1="185" y1="324" x2="185" y2="348" stroke="#666" stroke-width="1" marker-end="url(#pla)"/>
+
+    <!-- CEL wiring annotation -->
+    <text x="295" y="300" font-size="8" fill="#ea580c" font-family="monospace">${db.connection_string}</text>
+    <line x1="170" y1="254" x2="175" y2="278" stroke="#ea580c" stroke-width="1" stroke-dasharray="3,2"/>
+
+    <!-- DAG progression detail -->
+    <rect x="370" y="205" width="240" height="200" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="490" y="225" text-anchor="middle" font-size="10" font-weight="700" fill="#1a1a2e">Level Progression</text>
+
+    <text x="385" y="248" font-size="9" fill="#16a34a" font-weight="600">Level 0:</text>
+    <text x="440" y="248" font-size="9" fill="#555">Provision DB + Cache in parallel</text>
+    <text x="385" y="266" font-size="9" fill="#555">Status Consumer watches DB for Ready</text>
+
+    <text x="385" y="290" font-size="9" fill="#ea580c" font-weight="600">Level 1:</text>
+    <text x="440" y="290" font-size="9" fill="#555">Triggered when all L0 are Ready</text>
+    <text x="385" y="306" font-size="9" fill="#555">CEL Phase 2: resolve dependency outputs</text>
+    <text x="385" y="320" font-size="8" fill="#555" font-family="monospace">${db.connection_string} -&gt; actual value</text>
+
+    <text x="385" y="344" font-size="9" fill="#dc2626" font-weight="600">Level 2:</text>
+    <text x="440" y="344" font-size="9" fill="#555">Triggered when all L1 are Ready</text>
+
+    <rect x="385" y="360" width="210" height="30" rx="4" fill="#dbeafe" stroke="#93c5fd" stroke-width="1"/>
+    <text x="490" y="380" text-anchor="middle" font-size="8" fill="#555">Status Consumer -&gt; PM -&gt; next level</text>
+
+    <!-- Re-routing Section -->
+    <text x="750" y="190" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">Failure &amp; Re-Routing</text>
+    <text x="750" y="204" text-anchor="middle" font-size="9" fill="#666">(creation only)</text>
+
+    <rect x="690" y="215" width="120" height="36" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="750" y="238" text-anchor="middle" font-size="10" font-weight="600">Request Sent</text>
+
+    <line x1="750" y1="251" x2="750" y2="268" stroke="#666" stroke-width="1" marker-end="url(#pla)"/>
+
+    <polygon points="750,272 805,298 750,324 695,298" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="750" y="296" text-anchor="middle" font-size="9" font-weight="600">Queued /</text>
+    <text x="750" y="308" text-anchor="middle" font-size="9" font-weight="600">Timeout?</text>
+
+    <line x1="805" y1="298" x2="838" y2="298" stroke="#16a34a" stroke-width="1.5" marker-end="url(#pla-green)"/>
+    <text x="820" y="291" font-size="8" fill="#16a34a">No</text>
+    <rect x="840" y="283" width="45" height="30" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="862" y="302" text-anchor="middle" font-size="8" fill="#16a34a" font-weight="600">Ready</text>
+
+    <line x1="750" y1="324" x2="750" y2="345" stroke="#ea580c" stroke-width="1.5" marker-end="url(#pla-orange)"/>
+    <text x="760" y="338" font-size="8" fill="#ea580c">Yes</text>
+
+    <rect x="690" y="347" width="120" height="36" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="750" y="362" text-anchor="middle" font-size="8" font-weight="600">Re-evaluate policies</text>
+    <text x="750" y="374" text-anchor="middle" font-size="7" fill="#555">exclude_agents: [failed]</text>
+
+    <line x1="750" y1="383" x2="750" y2="398" stroke="#666" stroke-width="1" marker-end="url(#pla)"/>
+
+    <polygon points="750,402 795,420 750,438 705,420" fill="#fff" stroke="#666" stroke-width="1.5"/>
+    <text x="750" y="418" text-anchor="middle" font-size="8" font-weight="600">Alt</text>
+    <text x="750" y="428" text-anchor="middle" font-size="8" font-weight="600">agent?</text>
+
+    <line x1="795" y1="420" x2="838" y2="420" stroke="#16a34a" stroke-width="1.5" marker-end="url(#pla-green)"/>
+    <text x="820" y="413" font-size="8" fill="#16a34a">Yes</text>
+    <rect x="840" y="407" width="45" height="30" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="862" y="425" text-anchor="middle" font-size="7" fill="#16a34a">Retry</text>
+
+    <line x1="705" y1="420" x2="672" y2="420" stroke="#dc2626" stroke-width="1.5" marker-end="url(#pla-red)"/>
+    <text x="688" y="413" font-size="8" fill="#dc2626">No</text>
+    <rect x="625" y="407" width="45" height="30" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+    <text x="647" y="425" text-anchor="middle" font-size="8" fill="#dc2626" font-weight="600">Error</text>
+  </svg>
+
+  <!-- Deletion Flow -->
+  <h3 style="margin-top:24px; font-size:16px; color:#1a1a2e;">Service Deletion Flow</h3>
+  <p style="color:#666; font-size:13px; margin-bottom:12px;">Deletion <strong>cannot be re-routed</strong> to a different agent. The resource exists on the original agent's SP.</p>
+
+  <svg viewBox="0 0 900 220" width="900" height="220" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="pld" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+    </defs>
+
+    <!-- Deletion flow -->
+    <rect x="30" y="30" width="120" height="50" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="90" y="50" text-anchor="middle" font-size="10" font-weight="600" fill="#dc2626">DELETE</text>
+    <text x="90" y="66" text-anchor="middle" font-size="8" fill="#555">/resources/{id}</text>
+
+    <line x1="150" y1="55" x2="178" y2="55" stroke="#666" stroke-width="1.5" marker-end="url(#pld)"/>
+
+    <rect x="180" y="30" width="120" height="50" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="240" y="50" text-anchor="middle" font-size="10" font-weight="600">Lookup</text>
+    <text x="240" y="66" text-anchor="middle" font-size="8" fill="#555">agent, type, instance</text>
+
+    <line x1="300" y1="55" x2="328" y2="55" stroke="#666" stroke-width="1.5" marker-end="url(#pld)"/>
+
+    <rect x="330" y="30" width="120" height="50" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="390" y="50" text-anchor="middle" font-size="10" font-weight="600">SPRM</text>
+    <text x="390" y="66" text-anchor="middle" font-size="8" fill="#555">Publish delete event</text>
+
+    <line x1="450" y1="55" x2="478" y2="55" stroke="#666" stroke-width="1.5" marker-end="url(#pld)"/>
+
+    <rect x="480" y="30" width="120" height="50" rx="6" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <text x="540" y="50" text-anchor="middle" font-size="10" font-weight="600">Agent</text>
+    <text x="540" y="66" text-anchor="middle" font-size="8" fill="#555">Route to SP</text>
+
+    <!-- SP Healthy path -->
+    <line x1="600" y1="42" x2="658" y2="42" stroke="#16a34a" stroke-width="1.5" marker-end="url(#pld)"/>
+    <text x="628" y="36" font-size="8" fill="#16a34a">SP Ready</text>
+    <rect x="660" y="22" width="100" height="40" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="710" y="38" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="600">Deleted</text>
+    <text x="710" y="52" text-anchor="middle" font-size="8" fill="#555">Status: DELETED</text>
+
+    <!-- SP Unhealthy path -->
+    <line x1="540" y1="80" x2="540" y2="105" stroke="#ea580c" stroke-width="1.5" marker-end="url(#pld)"/>
+    <text x="555" y="96" font-size="8" fill="#ea580c">SP Unhealthy</text>
+
+    <rect x="470" y="107" width="140" height="40" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="540" y="123" text-anchor="middle" font-size="9" font-weight="600">Hold in retry topic</text>
+    <text x="540" y="137" text-anchor="middle" font-size="8" fill="#555">No timeout applied</text>
+
+    <!-- Recovery path -->
+    <line x1="610" y1="120" x2="658" y2="100" stroke="#16a34a" stroke-width="1" marker-end="url(#pld)"/>
+    <text x="648" y="108" font-size="7" fill="#16a34a">recover</text>
+    <rect x="660" y="82" width="100" height="36" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="710" y="105" text-anchor="middle" font-size="8" fill="#16a34a">Reprocess &amp; delete</text>
+
+    <!-- Unavailable path -->
+    <line x1="540" y1="147" x2="540" y2="168" stroke="#dc2626" stroke-width="1.5" marker-end="url(#pld)"/>
+    <text x="555" y="162" font-size="8" fill="#dc2626">SP gone</text>
+
+    <rect x="470" y="170" width="140" height="40" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="540" y="186" text-anchor="middle" font-size="9" font-weight="600" fill="#dc2626">Cleanup Queue</text>
+    <text x="540" y="200" text-anchor="middle" font-size="8" fill="#555">Background retry</text>
+
+    <!-- Difference callout -->
+    <rect x="30" y="110" width="280" height="90" rx="6" fill="#fef9c3" stroke="#fcd34d" stroke-width="1"/>
+    <text x="170" y="130" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">Key Differences from Creation</text>
+    <text x="170" y="148" text-anchor="middle" font-size="9" fill="#555">Cannot re-route to different agent</text>
+    <text x="170" y="163" text-anchor="middle" font-size="9" fill="#555">No queued_request_timeout applied</text>
+    <text x="170" y="178" text-anchor="middle" font-size="9" fill="#555">Relies on agent retry topic for resolution</text>
+    <text x="170" y="193" text-anchor="middle" font-size="9" fill="#555">Cleanup queue handles permanent SP loss</text>
+  </svg>
+
+  <!-- Rehydration link -->
+  <div class="detail-section" style="cursor:pointer; border-color:#c084fc;" onclick="showView('rehydration')">
+    <h3 style="color:#7c3aed;">Rehydration Flow &rarr;</h3>
+    <p style="font-size:13px; color:#666;">Re-evaluate policies and agents for existing resources. Uses create-before-delete pattern with deferred cleanup. <strong>Click to explore.</strong></p>
+  </div>
+
+  <div class="detail-section">
+    <h3>Configuration</h3>
+    <table class="info-table">
+      <thead><tr><th>Parameter</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>queued_request_timeout</code></td><td>300s</td><td>How long to wait for a queued creation request before re-evaluating with alternative agents</td></tr>
+        <tr><td><code>pending_request_timeout</code></td><td>60s</td><td>How long SPRM waits for agent acknowledgment before retrying</td></tr>
+        <tr><td><code>pending_request_max_retries</code></td><td>3</td><td>Max SPRM republish attempts before escalating to Placement Manager</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-section">
+    <h3>Placement Manager API</h3>
+    <table class="info-table">
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/api/v1/resources</code></td><td>Create resource (triggers placement flow)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/v1/resources</code></td><td>List all resources</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/v1/resources/{id}</code></td><td>Get specific resource with status</td></tr>
+        <tr><td><code>DELETE</code></td><td><code>/api/v1/resources/{id}</code></td><td>Delete resource (cannot be re-routed)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: AGENTS                                                      -->
+<!-- ================================================================ -->
+<div class="view" id="view-agents">
+  <a class="back-link" onclick="showView('overview')">&#8592; Back to Overview</a>
+  <h2>Environment Agents &amp; Service Providers</h2>
+  <p class="subtitle">Each environment runs an agent that routes requests to local service providers and reports health to the control plane.</p>
+
+  <svg viewBox="0 0 900 480" width="900" height="480" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="aga" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+    </defs>
+
+    <text x="450" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Agent Architecture &amp; SP Health</text>
+
+    <!-- Agent Registration Flow -->
+    <text x="220" y="60" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a2e">Agent Lifecycle</text>
+
+    <rect x="40" y="75" width="130" height="48" rx="5" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <text x="105" y="95" text-anchor="middle" font-size="10" font-weight="600">1. Start Agent</text>
+    <text x="105" y="110" text-anchor="middle" font-size="8" fill="#555">Load config</text>
+
+    <line x1="170" y1="99" x2="188" y2="99" stroke="#666" stroke-width="1" marker-end="url(#aga)"/>
+
+    <rect x="190" y="75" width="130" height="48" rx="5" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <text x="255" y="95" text-anchor="middle" font-size="10" font-weight="600">2. Register SPs</text>
+    <text x="255" y="110" text-anchor="middle" font-size="8" fill="#555">Embedded + external</text>
+
+    <line x1="320" y1="99" x2="338" y2="99" stroke="#666" stroke-width="1" marker-end="url(#aga)"/>
+
+    <rect x="340" y="75" width="130" height="48" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="405" y="95" text-anchor="middle" font-size="10" font-weight="600">3. Self-Register</text>
+    <text x="405" y="110" text-anchor="middle" font-size="8" fill="#555">POST /api/v1/agents</text>
+
+    <line x1="470" y1="99" x2="488" y2="99" stroke="#666" stroke-width="1" marker-end="url(#aga)"/>
+
+    <rect x="490" y="75" width="130" height="48" rx="5" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+    <text x="555" y="95" text-anchor="middle" font-size="10" font-weight="600">4. Create Topics</text>
+    <text x="555" y="110" text-anchor="middle" font-size="8" fill="#555">main + retry + cancel</text>
+
+    <line x1="620" y1="99" x2="638" y2="99" stroke="#666" stroke-width="1" marker-end="url(#aga)"/>
+
+    <rect x="640" y="75" width="130" height="48" rx="5" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <text x="705" y="95" text-anchor="middle" font-size="10" font-weight="600">5. Heartbeats</text>
+    <text x="705" y="110" text-anchor="middle" font-size="8" fill="#555">PUT /heartbeat</text>
+
+    <!-- SP Types -->
+    <text x="220" y="160" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a2e">Service Provider Types</text>
+
+    <!-- Embedded SPs -->
+    <rect x="40" y="175" width="350" height="120" rx="6" fill="#fff" stroke="#34d399" stroke-width="1.5"/>
+    <text x="215" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#065f46">Embedded SPs (built into agent binary)</text>
+
+    <rect x="55" y="205" width="95" height="40" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1"/>
+    <text x="102" y="222" text-anchor="middle" font-size="9" font-weight="600">KubeVirt</text>
+    <text x="102" y="238" text-anchor="middle" font-size="8" fill="#555">VM</text>
+
+    <rect x="158" y="205" width="95" height="40" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1"/>
+    <text x="205" y="222" text-anchor="middle" font-size="9" font-weight="600">K8s Container</text>
+    <text x="205" y="238" text-anchor="middle" font-size="8" fill="#555">Container</text>
+
+    <rect x="261" y="205" width="95" height="40" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1"/>
+    <text x="308" y="222" text-anchor="middle" font-size="9" font-weight="600">ACM Cluster</text>
+    <text x="308" y="238" text-anchor="middle" font-size="8" fill="#555">Cluster</text>
+
+    <text x="215" y="276" text-anchor="middle" font-size="9" fill="#555">In-process health checks. Enabled via agent config.</text>
+
+    <!-- External SPs -->
+    <rect x="420" y="175" width="300" height="120" rx="6" fill="#fff" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="570" y="195" text-anchor="middle" font-size="11" font-weight="700" fill="#9a3412">External SPs (standalone processes)</text>
+
+    <rect x="440" y="205" width="120" height="40" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1"/>
+    <text x="500" y="222" text-anchor="middle" font-size="9" font-weight="600">VMware SP</text>
+    <text x="500" y="238" text-anchor="middle" font-size="8" fill="#555">VM</text>
+
+    <rect x="570" y="205" width="120" height="40" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1"/>
+    <text x="630" y="222" text-anchor="middle" font-size="9" font-weight="600">PostgreSQL SP</text>
+    <text x="630" y="238" text-anchor="middle" font-size="8" fill="#555">Database</text>
+
+    <text x="570" y="276" text-anchor="middle" font-size="9" fill="#555">Register via POST /api/v1/providers. HTTP health polling.</text>
+
+    <!-- Service Type Uniqueness -->
+    <rect x="760" y="175" width="120" height="120" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="820" y="195" text-anchor="middle" font-size="10" font-weight="700" fill="#dc2626">Constraint</text>
+    <text x="820" y="215" text-anchor="middle" font-size="9" fill="#555">Only ONE SP</text>
+    <text x="820" y="230" text-anchor="middle" font-size="9" fill="#555">per service type</text>
+    <text x="820" y="245" text-anchor="middle" font-size="9" fill="#555">per agent.</text>
+    <text x="820" y="268" text-anchor="middle" font-size="9" fill="#555">Duplicates get</text>
+    <text x="820" y="283" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">409 Conflict</text>
+
+    <!-- Health States -->
+    <text x="450" y="330" text-anchor="middle" font-size="12" font-weight="700" fill="#1a1a2e">SP Health States (Three-State Model)</text>
+
+    <!-- Ready -->
+    <rect x="100" y="350" width="200" height="110" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+    <circle cx="120" cy="370" r="8" fill="#22c55e"/>
+    <text x="215" y="375" text-anchor="middle" font-size="12" font-weight="700" fill="#16a34a">Ready</text>
+    <text x="200" y="395" text-anchor="middle" font-size="9" fill="#555">SP is healthy and operational.</text>
+    <text x="200" y="412" text-anchor="middle" font-size="9" fill="#555">Agent routes requests normally.</text>
+    <text x="200" y="429" text-anchor="middle" font-size="9" fill="#555">Service type advertised to DCM.</text>
+
+    <line x1="300" y1="400" x2="348" y2="400" stroke="#ea580c" stroke-width="1.5" marker-end="url(#aga)"/>
+    <text x="324" y="393" font-size="8" fill="#ea580c">degrade</text>
+
+    <!-- Unhealthy -->
+    <rect x="350" y="350" width="200" height="110" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+    <circle cx="370" cy="370" r="8" fill="#fb923c"/>
+    <text x="465" y="375" text-anchor="middle" font-size="12" font-weight="700" fill="#ea580c">Unhealthy</text>
+    <text x="450" y="395" text-anchor="middle" font-size="9" fill="#555">SP is degraded (timeouts, errors).</text>
+    <text x="450" y="412" text-anchor="middle" font-size="9" fill="#555">Requests held in retry topic.</text>
+    <text x="450" y="429" text-anchor="middle" font-size="9" fill="#555">Service type still advertised.</text>
+
+    <line x1="550" y1="400" x2="598" y2="400" stroke="#dc2626" stroke-width="1.5" marker-end="url(#aga)"/>
+    <text x="574" y="393" font-size="8" fill="#dc2626">down</text>
+
+    <line x1="350" y1="380" x2="302" y2="380" stroke="#16a34a" stroke-width="1.5" marker-end="url(#aga)"/>
+    <text x="324" y="376" font-size="8" fill="#16a34a">recover</text>
+
+    <!-- Unavailable -->
+    <rect x="600" y="350" width="200" height="110" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+    <circle cx="620" cy="370" r="8" fill="#dc2626"/>
+    <text x="715" y="375" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">Unavailable</text>
+    <text x="700" y="395" text-anchor="middle" font-size="9" fill="#555">SP is down or permanently gone.</text>
+    <text x="700" y="412" text-anchor="middle" font-size="9" fill="#555">Service type REMOVED from list.</text>
+    <text x="700" y="429" text-anchor="middle" font-size="9" fill="#555">Retry topic requests rejected.</text>
+  </svg>
+
+  <div class="detail-section">
+    <h3>Agent Registration Data</h3>
+    <table class="info-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>Unique natural key (e.g., "prod-eu-agent"). Used for idempotent re-registration.</td></tr>
+        <tr><td><code>environment</code></td><td>Freeform identifier (e.g., "prod-eu-west-1"). Used by policies for filtering.</td></tr>
+        <tr><td><code>service_types</code></td><td>List of supported types (e.g., ["vm", "container"]). Aggregated from registered SPs.</td></tr>
+        <tr><td><code>cost</code></td><td>Tier: low, medium-low, medium, medium-high, high. Used by cost-based policies.</td></tr>
+        <tr><td><code>topic_name</code></td><td>Deterministic NATS topic (e.g., "dcm.agents.prod-eu-agent").</td></tr>
+        <tr><td><code>consumer_lag</code></td><td>Pending messages on topic. Reported in heartbeats.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-section">
+    <h3>NATS Topics per Agent</h3>
+    <table class="info-table">
+      <thead><tr><th>Topic</th><th>Direction</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>{topic_name}</code></td><td>DCM &rarr; Agent</td><td>Creation and deletion requests</td></tr>
+        <tr><td><code>{topic_name}.retry</code></td><td>Agent-internal</td><td>Requests held while SP is unhealthy</td></tr>
+        <tr><td><code>{topic_name}.cancel</code></td><td>DCM &rarr; Agent</td><td>Cancellation signals for re-routed requests</td></tr>
+        <tr><td><code>dcm.agents.responses</code></td><td>Agent &rarr; DCM</td><td>Status acknowledgments, errors, queued notices</td></tr>
+        <tr><td><code>dcm.agents.health</code></td><td>Agent &rarr; DCM</td><td>SP health degradation warnings</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="detail-section" style="cursor:pointer; border-color:#c084fc;" onclick="showView('agent-routing')">
+    <h3 style="color:#7c3aed;">Request Routing Details &rarr;</h3>
+    <p style="font-size:13px; color:#666;">How the agent routes requests across main, retry, and cancel topics based on SP health. Includes deny list, startup sequence, and CloudEvent types. <strong>Click to explore.</strong></p>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: PORTAL (Self-Service Portal)                                -->
+<!-- ================================================================ -->
+<div class="view" id="view-portal">
+  <a class="back-link" onclick="showView('overview')">&#8592; Back to Overview</a>
+  <h2>Self-Service Portal</h2>
+  <p class="subtitle">Users browse available catalog items and request infrastructure by filling in parameters.</p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:8px;">
+
+    <!-- Fedora VM -->
+    <div class="detail-section" style="border-color:#93c5fd;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:18px;">&#9211;</div>
+        <div>
+          <h3 style="margin:0; font-size:14px;">Fedora VM</h3>
+          <span style="font-size:11px; color:#64748b;">Service type: vm</span>
+        </div>
+      </div>
+      <table class="info-table" style="font-size:12px;">
+        <tr><td style="width:40%"><code>vcpu</code></td><td>2 <span style="color:#999">(1-8)</span></td></tr>
+        <tr><td><code>memory</code></td><td>1024 MB <span style="color:#999">(512-8192)</span></td></tr>
+        <tr><td><code>storage</code></td><td>20 GB</td></tr>
+        <tr><td><code>guest_os</code></td><td>fedora-40</td></tr>
+      </table>
+      <p style="font-size:11px; color:#999; margin-top:8px;">Single VM with SSH access. No dependencies.</p>
+    </div>
+
+    <!-- Nginx Container -->
+    <div class="detail-section" style="border-color:#93c5fd;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#d1fae5;display:flex;align-items:center;justify-content:center;font-size:18px;">&#9634;</div>
+        <div>
+          <h3 style="margin:0; font-size:14px;">Nginx Container</h3>
+          <span style="font-size:11px; color:#64748b;">Service type: container</span>
+        </div>
+      </div>
+      <table class="info-table" style="font-size:12px;">
+        <tr><td style="width:40%"><code>image</code></td><td>nginx:1.27</td></tr>
+        <tr><td><code>cpu</code></td><td>1 <span style="color:#999">(1-4)</span></td></tr>
+        <tr><td><code>memory</code></td><td>256 MB <span style="color:#999">(128-2048)</span></td></tr>
+        <tr><td><code>port</code></td><td>80 (public)</td></tr>
+      </table>
+      <p style="font-size:11px; color:#999; margin-top:8px;">Single container with a public endpoint. No dependencies.</p>
+    </div>
+
+    <!-- Dev App Stack -->
+    <div class="detail-section" style="border-color:#6366f1;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:18px;">&#9881;</div>
+        <div>
+          <h3 style="margin:0; font-size:14px;">Dev App Stack</h3>
+          <span style="font-size:11px; color:#64748b;">Multi-resource</span>
+        </div>
+      </div>
+      <table class="info-table" style="font-size:12px;">
+        <tr style="background:#f8fafc;"><td colspan="2" style="font-weight:600;">ordersDb <span style="color:#64748b; font-weight:400;">(database)</span></td></tr>
+        <tr><td style="width:40%"><code>engine</code></td><td>postgres <span style="color:#999">[postgres, mysql]</span></td></tr>
+        <tr><td><code>version</code></td><td>16 <span style="color:#999">(depends on engine)</span></td></tr>
+        <tr style="background:#f8fafc;"><td colspan="2" style="font-weight:600;">app <span style="color:#64748b; font-weight:400;">(container)</span> <span style="color:#ea580c; font-size:10px;">requires ordersDb</span></td></tr>
+        <tr><td><code>image</code></td><td>orders-api:1.0</td></tr>
+        <tr><td><code>DB_URL</code></td><td style="font-size:11px; color:#7c3aed;">${ordersDb.connection_string}</td></tr>
+      </table>
+      <p style="font-size:11px; color:#999; margin-top:8px;">Database + app container with CEL wiring. DAG: ordersDb &rarr; app.</p>
+    </div>
+
+    <!-- PostgreSQL Database -->
+    <div class="detail-section" style="border-color:#93c5fd;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#fef3c7;display:flex;align-items:center;justify-content:center;font-size:18px;">&#9739;</div>
+        <div>
+          <h3 style="margin:0; font-size:14px;">PostgreSQL Database</h3>
+          <span style="font-size:11px; color:#64748b;">Service type: database</span>
+        </div>
+      </div>
+      <table class="info-table" style="font-size:12px;">
+        <tr><td style="width:40%"><code>engine</code></td><td>postgres</td></tr>
+        <tr><td><code>version</code></td><td>16 <span style="color:#999">[14, 15, 16, 17]</span></td></tr>
+        <tr><td><code>replicas</code></td><td>1 <span style="color:#999">(1-5)</span></td></tr>
+        <tr><td><code>storage</code></td><td>10 GB</td></tr>
+      </table>
+      <p style="font-size:11px; color:#999; margin-top:8px;">Standalone managed database. No dependencies.</p>
+    </div>
+
+    <!-- ACM Cluster -->
+    <div class="detail-section" style="border-color:#93c5fd;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#fce7f3;display:flex;align-items:center;justify-content:center;font-size:18px;">&#9096;</div>
+        <div>
+          <h3 style="margin:0; font-size:14px;">K8s Cluster</h3>
+          <span style="font-size:11px; color:#64748b;">Service type: cluster</span>
+        </div>
+      </div>
+      <table class="info-table" style="font-size:12px;">
+        <tr><td style="width:40%"><code>version</code></td><td>1.30 <span style="color:#999">[1.29, 1.30]</span></td></tr>
+        <tr><td><code>control_plane</code></td><td>3 nodes</td></tr>
+        <tr><td><code>workers</code></td><td>3 <span style="color:#999">(1-10)</span></td></tr>
+        <tr><td><code>worker_cpu</code></td><td>4</td></tr>
+      </table>
+      <p style="font-size:11px; color:#999; margin-top:8px;">Managed Kubernetes cluster via ACM. No dependencies.</p>
+    </div>
+
+    <!-- RHEL VM -->
+    <div class="detail-section" style="border-color:#93c5fd;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:6px;background:#fef2f2;display:flex;align-items:center;justify-content:center;font-size:18px;">&#9211;</div>
+        <div>
+          <h3 style="margin:0; font-size:14px;">RHEL VM</h3>
+          <span style="font-size:11px; color:#64748b;">Service type: vm</span>
+        </div>
+      </div>
+      <table class="info-table" style="font-size:12px;">
+        <tr><td style="width:40%"><code>vcpu</code></td><td>4 <span style="color:#999">(2-16)</span></td></tr>
+        <tr><td><code>memory</code></td><td>4096 MB <span style="color:#999">(2048-32768)</span></td></tr>
+        <tr><td><code>storage</code></td><td>50 GB</td></tr>
+        <tr><td><code>guest_os</code></td><td>rhel-9</td></tr>
+      </table>
+      <p style="font-size:11px; color:#999; margin-top:8px;">Enterprise RHEL VM with larger defaults. No dependencies.</p>
+    </div>
+  </div>
+
+  <p style="font-size:12px; color:#888; margin-top:16px; text-align:center;">
+    Values in parentheses show allowed ranges. Values in brackets show allowed choices. Grayed fields are non-editable defaults.<br/>
+    For blueprint structure details, see <a style="cursor:pointer; color:#2563eb;" onclick="showView('catalog')">Catalog &amp; Service Types</a>.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: CATALOG                                                     -->
+<!-- ================================================================ -->
+<div class="view" id="view-catalog">
+  <a class="back-link" onclick="showView('overview')">&#8592; Back to Overview</a>
+  <h2>Catalog &amp; Service Types</h2>
+  <p class="subtitle">Administrators define service types and catalog items. Users instantiate catalog items to request infrastructure. Click a service type to see its full schema.</p>
+
+  <h3 style="font-size:15px; color:#1a1a2e; margin-bottom:12px;">Service Types</h3>
+
+  <div style="display:grid; grid-template-columns:1fr; gap:8px; margin-bottom:24px;">
+
+    <!-- VM -->
+    <div class="detail-section" style="padding:0; overflow:hidden;">
+      <div style="background:#dbeafe; padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="this.parentElement.classList.toggle('st-open')">
+        <span style="font-weight:700; font-size:14px;">VM</span>
+        <span style="font-size:11px; color:#64748b;">4 required &middot; 1 optional &middot; click to expand</span>
+      </div>
+      <div class="st-body">
+        <table class="info-table" style="font-size:12px;">
+          <thead><tr><th style="width:30%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>vcpu.count</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Number of virtual CPUs</td></tr>
+            <tr><td><code>memory.size</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Memory with unit (e.g., "8GB")</td></tr>
+            <tr><td><code>storage.disks[]</code></td><td>array</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Disk list; must include one named "boot"</td></tr>
+            <tr><td><code>&nbsp;&nbsp;.name</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Disk identifier ("boot" for root)</td></tr>
+            <tr><td><code>&nbsp;&nbsp;.capacity</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Disk size (e.g., "100GB")</td></tr>
+            <tr><td><code>guest_os.type</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>OS identifier (e.g., "rhel-9", "fedora-40")</td></tr>
+            <tr><td><code>access.ssh_public_key</code></td><td>string</td><td style="color:#999;">no</td><td>SSH public key for VM access</td></tr>
+            <tr><td><code>metadata.name</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Unique service name identifier</td></tr>
+            <tr><td><code>metadata.labels</code></td><td>map</td><td style="color:#999;">no</td><td>Key-value pairs for tagging</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:12px; font-weight:600; color:#7c3aed;">Provider Hints</div>
+        <table class="info-table" style="font-size:12px; margin-top:4px;">
+          <thead><tr><th style="width:15%; background:#f3e8ff;">Provider</th><th style="width:22%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="3" style="vertical-align:top; font-weight:600; background:#faf5ff;">osac</td><td><code>template_id</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>OSAC compute instance template</td></tr>
+            <tr><td><code>instance_type</code></td><td>string</td><td style="color:#999;">no</td><td>OSAC instance type name (mutually exclusive with cores/memory)</td></tr>
+            <tr><td><code>is_windows</code></td><td>boolean</td><td style="color:#999;">no</td><td>Windows guest OS flag</td></tr>
+            <tr><td style="font-weight:600; background:#faf5ff;">kubevirt</td><td colspan="4" style="color:#999; font-style:italic;">Generic map; provider-specific fields accepted but not constrained in schema</td></tr>
+            <tr><td style="font-weight:600; background:#faf5ff;">vmware</td><td colspan="4" style="color:#999; font-style:italic;">Generic map; provider-specific fields accepted but not constrained in schema</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Container -->
+    <div class="detail-section" style="padding:0; overflow:hidden;">
+      <div style="background:#d1fae5; padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="this.parentElement.classList.toggle('st-open')">
+        <span style="font-weight:700; font-size:14px;">Container</span>
+        <span style="font-size:11px; color:#64748b;">2 required &middot; 2 optional &middot; click to expand</span>
+      </div>
+      <div class="st-body">
+        <table class="info-table" style="font-size:12px;">
+          <thead><tr><th style="width:30%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>image.reference</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Container image (e.g., "nginx:latest")</td></tr>
+            <tr><td><code>resources.cpu.min</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Minimum guaranteed CPU cores</td></tr>
+            <tr><td><code>resources.cpu.max</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Maximum allowed CPU cores</td></tr>
+            <tr><td><code>resources.memory.min</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Minimum memory (e.g., "1GB")</td></tr>
+            <tr><td><code>resources.memory.max</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Maximum memory (e.g., "4GB")</td></tr>
+            <tr><td><code>process.command</code></td><td>array</td><td style="color:#999;">no</td><td>Entrypoint override</td></tr>
+            <tr><td><code>process.args</code></td><td>array</td><td style="color:#999;">no</td><td>Arguments to entrypoint</td></tr>
+            <tr><td><code>process.env[]</code></td><td>array</td><td style="color:#999;">no</td><td>Environment variables</td></tr>
+            <tr><td><code>&nbsp;&nbsp;.name</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Variable name</td></tr>
+            <tr><td><code>&nbsp;&nbsp;.value</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Variable value</td></tr>
+            <tr><td><code>network.ports[]</code></td><td>array</td><td style="color:#999;">no</td><td>Ports to expose</td></tr>
+            <tr><td><code>&nbsp;&nbsp;.container_port</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Port number (e.g., 8080)</td></tr>
+            <tr><td><code>&nbsp;&nbsp;.visibility</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>"none", "internal", or "external"</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:12px; font-weight:600; color:#7c3aed;">Provider Hints</div>
+        <table class="info-table" style="font-size:12px; margin-top:4px;">
+          <thead><tr><th style="width:15%; background:#f3e8ff;">Provider</th><th colspan="4">Notes</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600; background:#faf5ff;">kubernetes</td><td colspan="4" style="color:#999; font-style:italic;">Generic map accepted but not acted upon in v1. Service creation driven by per-port visibility field.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Database -->
+    <div class="detail-section" style="padding:0; overflow:hidden;">
+      <div style="background:#fef3c7; padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="this.parentElement.classList.toggle('st-open')">
+        <span style="font-weight:700; font-size:14px;">Database</span>
+        <span style="font-size:11px; color:#64748b;">3 required &middot; 2 optional &middot; click to expand</span>
+      </div>
+      <div class="st-body">
+        <table class="info-table" style="font-size:12px;">
+          <thead><tr><th style="width:30%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>engine</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>"postgresql", "mysql", "mariadb"</td></tr>
+            <tr><td><code>version</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Engine version (e.g., "15", "8.0")</td></tr>
+            <tr><td><code>resources.cpu.min</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Min CPU (e.g., "500m", "1")</td></tr>
+            <tr><td><code>resources.cpu.max</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Max CPU</td></tr>
+            <tr><td><code>resources.memory.min</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Min memory (e.g., "1GB")</td></tr>
+            <tr><td><code>resources.memory.max</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Max memory (e.g., "4GB")</td></tr>
+            <tr><td><code>resources.storage</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Storage size (e.g., "100GB")</td></tr>
+            <tr><td><code>replicas</code></td><td>integer</td><td style="color:#999;">no</td><td>Number of replicas (default: 1)</td></tr>
+            <tr><td><code>network.port</code></td><td>integer</td><td style="color:#999;">no</td><td>Listen port</td></tr>
+            <tr><td><code>network.visibility</code></td><td>string</td><td style="color:#999;">no</td><td>"internal" or "external"</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:12px; font-weight:600; color:#7c3aed;">Provider Hints</div>
+        <table class="info-table" style="font-size:12px; margin-top:4px;">
+          <thead><tr><th style="width:15%; background:#f3e8ff;">Provider</th><th colspan="4">Notes</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600; background:#faf5ff;">cloudnative-pg</td><td colspan="4" style="color:#999; font-style:italic;">Generic map; provider-specific fields accepted but not constrained in schema</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cluster -->
+    <div class="detail-section" style="padding:0; overflow:hidden;">
+      <div style="background:#fce7f3; padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="this.parentElement.classList.toggle('st-open')">
+        <span style="font-weight:700; font-size:14px;">Cluster</span>
+        <span style="font-size:11px; color:#64748b;">2 required &middot; 0 optional &middot; click to expand</span>
+      </div>
+      <div class="st-body">
+        <table class="info-table" style="font-size:12px;">
+          <thead><tr><th style="width:30%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>version</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>K8s version (e.g., "1.29", "1.30")</td></tr>
+            <tr><td><code>nodes.control_plane.count</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Control plane nodes: 1, 3, or 5</td></tr>
+            <tr><td><code>nodes.control_plane.cpu</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>CPUs per control plane node</td></tr>
+            <tr><td><code>nodes.control_plane.memory</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Memory per node (e.g., "16GB")</td></tr>
+            <tr><td><code>nodes.control_plane.storage</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Storage per node (e.g., "120GB")</td></tr>
+            <tr><td><code>nodes.worker.count</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Number of worker nodes</td></tr>
+            <tr><td><code>nodes.worker.cpu</code></td><td>integer</td><td style="color:#16a34a; font-weight:600;">yes</td><td>CPUs per worker node</td></tr>
+            <tr><td><code>nodes.worker.memory</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Memory per worker (e.g., "8GB")</td></tr>
+            <tr><td><code>nodes.worker.storage</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Storage per worker (e.g., "120GB")</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:12px; font-weight:600; color:#7c3aed;">Provider Hints</div>
+        <table class="info-table" style="font-size:12px; margin-top:4px;">
+          <thead><tr><th style="width:15%; background:#f3e8ff;">Provider</th><th style="width:22%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="4" style="vertical-align:top; font-weight:600; background:#faf5ff;">acm</td><td><code>platform</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>"kubevirt" or "baremetal"</td></tr>
+            <tr><td><code>base_domain</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Base DNS domain for the cluster</td></tr>
+            <tr><td><code>infra_env</code></td><td>string</td><td style="color:#999;">no</td><td>InfraEnv resource name (BareMetal only)</td></tr>
+            <tr><td><code>agent_labels</code></td><td>object</td><td style="color:#999;">no</td><td>Agent selection labels (BareMetal only)</td></tr>
+            <tr><td rowspan="5" style="vertical-align:top; font-weight:600; background:#faf5ff;">osac</td><td><code>template_id</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>OSAC cluster template for provisioning</td></tr>
+            <tr><td><code>base_domain</code></td><td>string</td><td style="color:#999;">no</td><td>Base DNS domain for the cluster</td></tr>
+            <tr><td><code>pull_secret</code></td><td>string</td><td style="color:#999;">no</td><td>Pull secret reference for image pulls</td></tr>
+            <tr><td><code>ssh_key</code></td><td>string</td><td style="color:#999;">no</td><td>SSH public key for node access</td></tr>
+            <tr><td><code>release_image</code></td><td>string</td><td style="color:#999;">no</td><td>Specific OCP release image (overrides version)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Storage -->
+    <div class="detail-section" style="padding:0; overflow:hidden;">
+      <div style="background:#f3e8ff; padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="this.parentElement.classList.toggle('st-open')">
+        <span style="font-weight:700; font-size:14px;">Storage</span>
+        <span style="font-size:11px; color:#64748b;">1 required &middot; 0 optional &middot; click to expand</span>
+      </div>
+      <div class="st-body">
+        <table class="info-table" style="font-size:12px;">
+          <thead><tr><th style="width:30%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>capacity</code></td><td>string</td><td style="color:#16a34a; font-weight:600;">yes</td><td>Volume size (e.g., "100Gi", "1TB")</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px; font-size:12px; font-weight:600; color:#7c3aed;">Provider Hints</div>
+        <table class="info-table" style="font-size:12px; margin-top:4px;">
+          <thead><tr><th style="width:15%; background:#f3e8ff;">Provider</th><th style="width:22%">Field</th><th style="width:10%">Type</th><th style="width:6%">Req</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="3" style="vertical-align:top; font-weight:600; background:#faf5ff;">kubernetes</td><td><code>storage_class</code></td><td>string</td><td style="color:#999;">no</td><td>Kubernetes StorageClass name</td></tr>
+            <tr><td><code>volume_mode</code></td><td>string</td><td style="color:#999;">no</td><td>"Filesystem" (default) or "Block"</td></tr>
+            <tr><td><code>access_mode</code></td><td>string</td><td style="color:#999;">no</td><td>ReadWriteOnce (default), ReadOnlyMany, ReadWriteMany</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size:11px; color:#999; margin-bottom:16px;">All service types also include <code>metadata.name</code> (required), <code>metadata.labels</code> (optional), and <code>provider_hints</code> (optional). Read-only fields (id, status, create_time, update_time) are omitted above.</p>
+
+  <h3 style="font-size:15px; color:#1a1a2e; margin-bottom:12px;">Catalog Item Blueprint</h3>
+
+  <svg viewBox="0 0 900 220" width="900" height="220" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="ca" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+    </defs>
+
+    <rect x="30" y="10" width="540" height="180" rx="6" fill="#fff" stroke="#6366f1" stroke-width="1.5"/>
+    <rect x="30" y="10" width="540" height="24" rx="6" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="300" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="#4338ca">CatalogItem: "Dev App Stack"</text>
+
+    <rect x="50" y="45" width="230" height="130" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="165" y="62" text-anchor="middle" font-size="10" font-weight="600">Resource: "ordersDb"</text>
+    <text x="165" y="80" text-anchor="middle" font-size="9" fill="#555">service_type: database</text>
+    <text x="165" y="96" text-anchor="middle" font-size="9" fill="#555">fields:</text>
+    <text x="165" y="110" text-anchor="middle" font-size="8" fill="#555" font-family="monospace">engine: default="postgres"</text>
+    <text x="165" y="124" text-anchor="middle" font-size="8" fill="#555" font-family="monospace">version: default="16"</text>
+    <text x="165" y="138" text-anchor="middle" font-size="8" fill="#555" font-family="monospace">replicas: validation={min:1,max:5}</text>
+    <text x="165" y="155" text-anchor="middle" font-size="9" fill="#16a34a" font-weight="500">requires_resources: [ ]</text>
+
+    <rect x="300" y="45" width="250" height="130" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="425" y="62" text-anchor="middle" font-size="10" font-weight="600">Resource: "app"</text>
+    <text x="425" y="80" text-anchor="middle" font-size="9" fill="#555">service_type: container</text>
+    <text x="425" y="96" text-anchor="middle" font-size="9" fill="#555">fields:</text>
+    <text x="425" y="110" text-anchor="middle" font-size="8" fill="#555" font-family="monospace">image: default="myapp:latest"</text>
+    <text x="425" y="124" text-anchor="middle" font-size="8" fill="#555" font-family="monospace">cpu: default=2</text>
+    <text x="425" y="138" text-anchor="middle" font-size="8" fill="#555" font-family="monospace">env.DB_URL: depends_on=ordersDb</text>
+    <text x="425" y="155" text-anchor="middle" font-size="9" fill="#ea580c" font-weight="500">requires_resources: [ "ordersDb" ]</text>
+
+    <line x1="280" y1="110" x2="298" y2="110" stroke="#ea580c" stroke-width="1.5" marker-end="url(#ca)"/>
+
+    <rect x="640" y="10" width="230" height="140" rx="6" fill="#fff" stroke="#22c55e" stroke-width="1.5"/>
+    <rect x="640" y="10" width="230" height="24" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="755" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="#16a34a">CatalogItemInstance</text>
+
+    <text x="755" y="52" text-anchor="middle" font-size="9" fill="#555">catalog_item_id: "dev-app-stack"</text>
+    <text x="755" y="72" text-anchor="middle" font-size="10" font-weight="600">User Overrides:</text>
+    <text x="755" y="92" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">ordersDb.version = "17"</text>
+    <text x="755" y="108" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">ordersDb.replicas = 3</text>
+    <text x="755" y="124" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">app.cpu = 4</text>
+
+    <line x1="570" y1="100" x2="638" y2="80" stroke="#666" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ca)"/>
+    <text x="604" y="82" font-size="9" fill="#666">instantiate</text>
+  </svg>
+
+  <div class="detail-section">
+    <h3>Catalog Manager API</h3>
+    <table class="info-table">
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/api/v1alpha1/catalog-items</code></td><td>Create catalog item blueprint</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/v1alpha1/catalog-items</code></td><td>List catalog items</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/v1alpha1/catalog-item-instances</code></td><td>Create instance (triggers placement)</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/v1alpha1/catalog-item-instances/{id}</code></td><td>Get instance status</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: REHYDRATION                                                 -->
+<!-- ================================================================ -->
+<div class="view" id="view-rehydration">
+  <a class="back-link" onclick="showView('placement')">&#8592; Back to Placement Manager</a>
+  <h2>Rehydration Flow</h2>
+  <p class="subtitle">Re-evaluate policies and agents for existing resources. Creates new resource before deleting old one to prevent downtime.</p>
+
+  <svg viewBox="0 0 900 500" width="900" height="500" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="rha" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+      <marker id="rha-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+      </marker>
+      <marker id="rha-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+      </marker>
+    </defs>
+
+    <text x="450" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Rehydration: Create-Before-Delete Pattern</text>
+
+    <!-- Step 1: Trigger -->
+    <rect x="30" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="95" y="70" text-anchor="middle" font-size="10" font-weight="600">1. Trigger</text>
+    <text x="95" y="84" text-anchor="middle" font-size="8" fill="#555">POST /{id}:rehydrate</text>
+    <text x="95" y="96" text-anchor="middle" font-size="8" fill="#555">via Catalog Manager</text>
+
+    <line x1="160" y1="77" x2="178" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#rha)"/>
+
+    <!-- Step 2: Generate new ID -->
+    <rect x="180" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="245" y="70" text-anchor="middle" font-size="10" font-weight="600">2. New Instance ID</text>
+    <text x="245" y="84" text-anchor="middle" font-size="8" fill="#555">CM generates new ID</text>
+    <text x="245" y="96" text-anchor="middle" font-size="8" fill="#555">DB-first (compare-and-swap)</text>
+
+    <line x1="310" y1="77" x2="328" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#rha)"/>
+
+    <!-- Step 3: Retrieve intent -->
+    <rect x="330" y="50" width="130" height="55" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="395" y="70" text-anchor="middle" font-size="10" font-weight="600">3. Retrieve Intent</text>
+    <text x="395" y="84" text-anchor="middle" font-size="8" fill="#555">PM looks up original</text>
+    <text x="395" y="96" text-anchor="middle" font-size="8" fill="#555">intent from Placement DB</text>
+
+    <line x1="460" y1="77" x2="478" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#rha)"/>
+
+    <!-- Step 4: Re-evaluate -->
+    <rect x="480" y="50" width="130" height="55" rx="6" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="545" y="70" text-anchor="middle" font-size="10" font-weight="600">4. Re-Evaluate</text>
+    <text x="545" y="84" text-anchor="middle" font-size="8" fill="#555">Policy Engine with</text>
+    <text x="545" y="96" text-anchor="middle" font-size="8" fill="#555">fresh agent list</text>
+
+    <!-- Reject path -->
+    <line x1="545" y1="105" x2="545" y2="130" stroke="#dc2626" stroke-width="1.5" marker-end="url(#rha-red)"/>
+    <rect x="485" y="132" width="120" height="28" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+    <text x="545" y="150" text-anchor="middle" font-size="8" fill="#dc2626" font-weight="600">Rejected: CM rollback</text>
+
+    <!-- Approve path -->
+    <line x1="610" y1="77" x2="628" y2="77" stroke="#16a34a" stroke-width="1.5" marker-end="url(#rha-green)"/>
+
+    <!-- Step 5: Create new -->
+    <rect x="630" y="50" width="130" height="55" rx="6" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="695" y="70" text-anchor="middle" font-size="10" font-weight="600">5. Create New</text>
+    <text x="695" y="84" text-anchor="middle" font-size="8" fill="#555">SPRM publishes to</text>
+    <text x="695" y="96" text-anchor="middle" font-size="8" fill="#555">new agent's topic</text>
+
+    <line x1="760" y1="77" x2="778" y2="77" stroke="#666" stroke-width="1.5" marker-end="url(#rha)"/>
+
+    <!-- Step 6: Deferred delete -->
+    <rect x="780" y="50" width="100" height="55" rx="6" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="830" y="70" text-anchor="middle" font-size="10" font-weight="600">6. Deferred</text>
+    <text x="830" y="84" text-anchor="middle" font-size="8" fill="#555">Delete old with</text>
+    <text x="830" y="96" text-anchor="middle" font-size="8" fill="#dc2626" font-weight="600">deferred=true</text>
+
+    <!-- Visual: Create-Before-Delete timeline -->
+    <text x="450" y="195" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">Timeline: Zero-Downtime Transition</text>
+
+    <!-- Old resource bar -->
+    <rect x="100" y="215" width="600" height="30" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+    <text x="400" y="235" text-anchor="middle" font-size="10" font-weight="600" fill="#dc2626">Old Resource (Agent A)</text>
+    <rect x="650" y="215" width="50" height="30" rx="4" fill="#fca5a5" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="675" y="234" text-anchor="middle" font-size="8" fill="#dc2626">defer</text>
+
+    <!-- New resource bar -->
+    <rect x="400" y="255" width="380" height="30" rx="4" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+    <text x="590" y="275" text-anchor="middle" font-size="10" font-weight="600" fill="#16a34a">New Resource (Agent B)</text>
+
+    <!-- Overlap annotation -->
+    <line x1="400" y1="210" x2="400" y2="295" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="700" y1="210" x2="700" y2="295" stroke="#7c3aed" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="550" y="308" text-anchor="middle" font-size="9" fill="#7c3aed" font-weight="600">Both exist (overlap ensures no downtime)</text>
+
+    <!-- Time arrow -->
+    <line x1="80" y1="250" x2="800" y2="250" stroke="#ccc" stroke-width="1" marker-end="url(#rha)"/>
+    <text x="810" y="254" font-size="9" fill="#999">time</text>
+
+    <!-- Cleanup Queue Section -->
+    <text x="450" y="350" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">Cleanup Queue (Background Scheduler)</text>
+
+    <rect x="30" y="370" width="840" height="110" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+
+    <text x="60" y="395" font-size="10" fill="#555">Deferred deletions are enqueued (not published to agent). A background scheduler periodically retries:</text>
+
+    <!-- Condition table inside SVG -->
+    <rect x="60" y="405" width="260" height="28" rx="3" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="190" y="423" text-anchor="middle" font-size="9" fill="#555">Agent not registered &rarr; Mark <tspan font-weight="600" fill="#16a34a">DELETED</tspan></text>
+
+    <rect x="330" y="405" width="260" height="28" rx="3" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
+    <text x="460" y="423" text-anchor="middle" font-size="9" fill="#555">SP not advertised &rarr; <tspan font-weight="600" fill="#ea580c">Skip, retry later</tspan></text>
+
+    <rect x="600" y="405" width="250" height="28" rx="3" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="725" y="423" text-anchor="middle" font-size="9" fill="#555">SP advertised, delete sent &rarr; <tspan font-weight="600" fill="#16a34a">DELETED</tspan></text>
+
+    <rect x="60" y="440" width="530" height="28" rx="3" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="325" y="458" text-anchor="middle" font-size="9" fill="#555">SP advertised, delete fails &rarr; Mark <tspan font-weight="600" fill="#16a34a">DELETED</tspan> (original SP context gone, cleanup not needed)</text>
+  </svg>
+</div>
+
+<!-- ================================================================ -->
+<!-- VIEW: AGENT ROUTING                                               -->
+<!-- ================================================================ -->
+<div class="view" id="view-agent-routing">
+  <a class="back-link" onclick="showView('agents')">&#8592; Back to Agents &amp; SPs</a>
+  <h2>Agent Request Routing</h2>
+  <p class="subtitle">How the agent routes requests across its three NATS topics based on service provider health.</p>
+
+  <svg viewBox="0 0 900 540" width="900" height="540" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+    <defs>
+      <marker id="ara" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+      </marker>
+      <marker id="ara-green" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a"/>
+      </marker>
+      <marker id="ara-red" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+      </marker>
+      <marker id="ara-purple" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-reverse">
+        <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+      </marker>
+    </defs>
+
+    <text x="450" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1a1a2e">Three-Topic Request Routing Architecture</text>
+
+    <!-- DCM side -->
+    <rect x="30" y="60" width="140" height="50" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="100" y="82" text-anchor="middle" font-size="11" font-weight="600">DCM (SPRM)</text>
+    <text x="100" y="98" text-anchor="middle" font-size="9" fill="#555">CloudEvents</text>
+
+    <!-- Main Topic -->
+    <rect x="230" y="50" width="220" height="70" rx="6" fill="#f3e8ff" stroke="#c084fc" stroke-width="2"/>
+    <text x="340" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">Main Topic</text>
+    <text x="340" y="88" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">{agent_topic_name}</text>
+    <text x="340" y="104" text-anchor="middle" font-size="9" fill="#555">Creation &amp; deletion requests</text>
+
+    <line x1="170" y1="85" x2="228" y2="85" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#ara-purple)"/>
+    <text x="195" y="78" font-size="8" fill="#7c3aed">publish</text>
+
+    <!-- Agent Processing -->
+    <rect x="510" y="50" width="160" height="70" rx="6" fill="#d1fae5" stroke="#6ee7b7" stroke-width="2"/>
+    <text x="590" y="72" text-anchor="middle" font-size="11" font-weight="600" fill="#065f46">Agent</text>
+    <text x="590" y="88" text-anchor="middle" font-size="9" fill="#555">Check SP health</text>
+    <text x="590" y="104" text-anchor="middle" font-size="9" fill="#555">Check deny list</text>
+
+    <line x1="450" y1="85" x2="508" y2="85" stroke="#666" stroke-width="1.5" marker-end="url(#ara)"/>
+    <text x="476" y="78" font-size="8" fill="#666">consume</text>
+
+    <!-- SP Ready path -->
+    <line x1="670" y1="72" x2="728" y2="55" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ara-green)"/>
+    <text x="700" y="54" font-size="8" fill="#16a34a">SP Ready</text>
+
+    <rect x="730" y="35" width="140" height="45" rx="4" fill="#fce7f3" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="800" y="54" text-anchor="middle" font-size="10" font-weight="600">Service Provider</text>
+    <text x="800" y="70" text-anchor="middle" font-size="8" fill="#555">Process request</text>
+
+    <!-- SP Unhealthy path -->
+    <line x1="590" y1="120" x2="590" y2="150" stroke="#ea580c" stroke-width="1.5" marker-end="url(#ara)"/>
+    <text x="610" y="140" font-size="8" fill="#ea580c">SP Unhealthy</text>
+
+    <!-- Retry Topic -->
+    <rect x="230" y="160" width="220" height="80" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+    <text x="340" y="182" text-anchor="middle" font-size="12" font-weight="700" fill="#ea580c">Retry Topic</text>
+    <text x="340" y="198" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">{agent_topic_name}.retry</text>
+    <text x="340" y="214" text-anchor="middle" font-size="9" fill="#555">Holds requests while SP unhealthy</text>
+    <text x="340" y="228" text-anchor="middle" font-size="9" fill="#555">Agent-internal (not published by DCM)</text>
+
+    <line x1="510" y1="190" x2="452" y2="190" stroke="#ea580c" stroke-width="1.5" marker-end="url(#ara)"/>
+    <text x="480" y="183" font-size="8" fill="#ea580c">hold</text>
+
+    <!-- QUEUED notification -->
+    <rect x="530" y="160" width="140" height="36" rx="4" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
+    <text x="600" y="176" text-anchor="middle" font-size="9" font-weight="600" fill="#ea580c">Notify DCM</text>
+    <text x="600" y="190" text-anchor="middle" font-size="8" fill="#555">status: QUEUED</text>
+    <line x1="590" y1="150" x2="590" y2="158" stroke="#ea580c" stroke-width="1"/>
+
+    <!-- Recovery path from retry -->
+    <line x1="340" y1="160" x2="340" y2="135" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ara-green)" stroke-dasharray="4,3"/>
+    <text x="290" y="148" font-size="8" fill="#16a34a">SP recovers</text>
+
+    <!-- Arrow from retry back to agent processing -->
+    <path d="M 340 148 Q 340 130, 510 85" stroke="#16a34a" stroke-width="1" fill="none" stroke-dasharray="4,3" marker-end="url(#ara-green)"/>
+
+    <!-- Unavailable path from retry -->
+    <line x1="340" y1="240" x2="340" y2="268" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ara-red)"/>
+    <text x="360" y="258" font-size="8" fill="#dc2626">SP Unavailable</text>
+
+    <rect x="280" y="270" width="120" height="30" rx="4" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+    <text x="340" y="290" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">Reject held requests</text>
+
+    <!-- Cancel Topic -->
+    <rect x="230" y="330" width="220" height="80" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+    <text x="340" y="352" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">Cancel Topic</text>
+    <text x="340" y="368" text-anchor="middle" font-size="9" fill="#555" font-family="monospace">{agent_topic_name}.cancel</text>
+    <text x="340" y="384" text-anchor="middle" font-size="9" fill="#555">DCM sends cancel when re-routing</text>
+    <text x="340" y="398" text-anchor="middle" font-size="9" fill="#555">or during rehydration</text>
+
+    <line x1="100" y1="110" x2="100" y2="370" stroke="#dc2626" stroke-width="1" stroke-dasharray="4,3"/>
+    <line x1="100" y1="370" x2="228" y2="370" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ara-red)"/>
+    <text x="160" y="363" font-size="8" fill="#dc2626">cancel signal</text>
+
+    <!-- Deny list -->
+    <rect x="510" y="330" width="180" height="80" rx="6" fill="#fff" stroke="#e5e7eb" stroke-width="1.5"/>
+    <text x="600" y="352" text-anchor="middle" font-size="11" font-weight="700" fill="#1a1a2e">Deny List</text>
+    <text x="600" y="370" text-anchor="middle" font-size="9" fill="#555">In-memory set of resource_ids</text>
+    <text x="600" y="386" text-anchor="middle" font-size="9" fill="#555">from consumed cancel events.</text>
+    <text x="600" y="402" text-anchor="middle" font-size="9" fill="#555">Rebuilt from cancel topic on restart.</text>
+
+    <line x1="450" y1="370" x2="508" y2="370" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ara-red)"/>
+    <text x="476" y="363" font-size="8" fill="#dc2626">populate</text>
+
+    <!-- Deny list -> Agent check -->
+    <line x1="600" y1="330" x2="600" y2="122" stroke="#999" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#ara)"/>
+    <text x="615" y="230" font-size="8" fill="#999" transform="rotate(-90, 615, 230)">filter stale requests</text>
+
+    <!-- Startup sequence -->
+    <text x="450" y="448" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">Agent Startup Sequence</text>
+
+    <rect x="100" y="465" width="140" height="40" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="170" y="483" text-anchor="middle" font-size="9" font-weight="600">1. Drain cancel topic</text>
+    <text x="170" y="497" text-anchor="middle" font-size="8" fill="#555">Populate deny list</text>
+
+    <line x1="240" y1="485" x2="288" y2="485" stroke="#666" stroke-width="1" marker-end="url(#ara)"/>
+
+    <rect x="290" y="465" width="140" height="40" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="360" y="483" text-anchor="middle" font-size="9" font-weight="600">2. Consume retry topic</text>
+    <text x="360" y="497" text-anchor="middle" font-size="8" fill="#555">Filter via deny list</text>
+
+    <line x1="430" y1="485" x2="478" y2="485" stroke="#666" stroke-width="1" marker-end="url(#ara)"/>
+
+    <rect x="480" y="465" width="140" height="40" rx="5" fill="#dbeafe" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="550" y="483" text-anchor="middle" font-size="9" font-weight="600">3. Consume main topic</text>
+    <text x="550" y="497" text-anchor="middle" font-size="8" fill="#555">Normal operation</text>
+
+    <line x1="620" y1="485" x2="668" y2="485" stroke="#666" stroke-width="1" marker-end="url(#ara)"/>
+
+    <rect x="670" y="465" width="140" height="40" rx="5" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1.5"/>
+    <text x="740" y="483" text-anchor="middle" font-size="9" font-weight="600">4. Continuous</text>
+    <text x="740" y="497" text-anchor="middle" font-size="8" fill="#555">All 3 topics in parallel</text>
+  </svg>
+
+  <div class="detail-section">
+    <h3>CloudEvent Types</h3>
+    <table class="info-table">
+      <thead><tr><th>Event Type</th><th>Direction</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>dcm.request.create</code></td><td>DCM &rarr; Agent</td><td>Create a new resource instance</td></tr>
+        <tr><td><code>dcm.request.delete</code></td><td>DCM &rarr; Agent</td><td>Delete an existing resource instance</td></tr>
+        <tr><td><code>dcm.request.cancel</code></td><td>DCM &rarr; Agent</td><td>Cancel a previously sent request (re-routed or rehydrated)</td></tr>
+        <tr><td><code>dcm.agent.creation-acknowledged</code></td><td>Agent &rarr; DCM</td><td>Agent confirmed creation request received</td></tr>
+        <tr><td><code>dcm.agent.deletion-acknowledged</code></td><td>Agent &rarr; DCM</td><td>Agent confirmed deletion request received</td></tr>
+        <tr><td><code>dcm.agent.request-queued</code></td><td>Agent &rarr; DCM</td><td>Request held in retry topic (SP unhealthy)</td></tr>
+        <tr><td><code>dcm.agent.cancel-rejected</code></td><td>Agent &rarr; DCM</td><td>Cancel arrived too late; resource already provisioning</td></tr>
+        <tr><td><code>dcm.agent.error</code></td><td>Agent &rarr; DCM</td><td>SP returned an error</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+var currentFlow = 'placement';
+
+function switchFlow(flowId) {
+  currentFlow = flowId;
+  hideStepDetail();
+  // Update tabs
+  document.querySelectorAll('.flow-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelector('.flow-tab[onclick*="' + flowId + '"]').classList.add('active');
+  // Update SVG annotations
+  document.querySelectorAll('[id^="flow-svg-"]').forEach(function(g) { g.style.display = 'none'; });
+  var svgGroup = document.getElementById('flow-svg-' + flowId);
+  if (svgGroup) svgGroup.style.display = '';
+  // Update step cards
+  document.querySelectorAll('.flow-steps').forEach(function(s) { s.classList.remove('active'); });
+  var stepsDiv = document.getElementById('flow-steps-' + flowId);
+  if (stepsDiv) stepsDiv.classList.add('active');
+}
+
+var allStepDetails = {
+  placement: {
+  1: {
+    title: 'User Request: Create CatalogItemInstance',
+    endpoint: 'POST /api/v1alpha1/catalog-item-instances',
+    from: 'User (via Self-Service Portal)',
+    to: 'Catalog Manager',
+    request: `{
+  "catalog_item_id": "fedora-vm",
+  "user_values": [
+    {
+      "resource": "main",
+      "path": "vcpu",
+      "value": 2
+    },
+    {
+      "resource": "main",
+      "path": "memory",
+      "value": 1024
+    }
+  ]
+}`,
+    response: `HTTP/1.1 202 Accepted
+
+{
+  "id": "cii-a1b2c3d4",
+  "catalog_item_id": "fedora-vm",
+  "status": "provisioning"
+}`,
+    note: 'The user selects a CatalogItem and overrides editable fields. The Catalog Manager validates user_values against the blueprint field schemas (JSON Schema constraints) before proceeding.'
+  },
+  2: {
+    title: 'Catalog Manager: Resolve Blueprint & Submit',
+    endpoint: 'In-process call to Placement Manager',
+    from: 'Catalog Manager',
+    to: 'Placement Manager',
+    request: `// Catalog Manager resolves the blueprint:
+// 1. Load CatalogItem "fedora-vm" fields + defaults
+// 2. Overlay user_values onto defaults
+// 3. Validate against field validation_schema
+// 4. Build resolved resource spec
+
+// Resolved spec sent to Placement Manager:
+{
+  "catalog_item_instance_id": "cii-a1b2c3d4",
+  "spec": {
+    "resources": [
+      {
+        "name": "main",
+        "service_type": "vm",
+        "spec": {
+          "vcpu": 2,
+          "memory": 1024,
+          "storage": 20,
+          "guest_os": "fedora-40",
+          "access": {
+            "ssh_keys": ["ssh-ed25519 AAAA..."]
+          }
+        }
+      }
+    ]
+  }
+}`,
+    response: null,
+    note: 'For multi-resource CatalogItems, the spec would contain multiple entries in the resources array with requires_resources dependencies between them. CEL expressions like ${ordersDb.connection_string} are left unresolved at this stage.'
+  },
+  3: {
+    title: 'Placement Manager: Store Intent & Fetch Agents',
+    endpoint: 'Internal (Placement DB + Agent Registry)',
+    from: 'Placement Manager',
+    to: 'Placement DB / Agent Registry',
+    request: `// Step 3a: Store original intent in Placement DB
+INSERT INTO placement_resources {
+  "id": "res-x7y8z9",
+  "catalog_item_instance_id": "cii-a1b2c3d4",
+  "spec": { /* original resolved spec */ },
+  "status": "pending",
+  "create_time": "2026-07-28T10:00:00Z"
+}
+
+// Step 3b: Fetch available agents from Agent Registry
+// Filters: healthy (heartbeat within threshold),
+//          non-congested (consumer_lag below limit),
+//          supports service_type "vm"`,
+    response: `// Available agents returned:
+{
+  "available_agents": [
+    {
+      "name": "prod-eu-agent",
+      "environment": "prod-eu-west-1",
+      "service_types": ["vm", "container"],
+      "cost": "medium",
+      "topic_name": "dcm.agents.prod-eu-agent"
+    },
+    {
+      "name": "prod-us-agent",
+      "environment": "prod-us-east-1",
+      "service_types": ["vm", "database"],
+      "cost": "low",
+      "topic_name": "dcm.agents.prod-us-agent"
+    }
+  ]
+}`,
+    note: 'The intent is stored first to enable rehydration and audit trails. Only agents that pass health, congestion, and service type checks are included in the available list.'
+  },
+  4: {
+    title: 'Policy Engine: Evaluate Policies',
+    endpoint: 'POST /api/v1alpha1/policies:evaluateRequest (in-process)',
+    from: 'Placement Manager',
+    to: 'Policy Engine (embedded OPA)',
+    request: `{
+  "service_instance": {
+    "spec": {
+      "service_type": "vm",
+      "vcpu": 2,
+      "memory": 1024,
+      "storage": 20,
+      "guest_os": "fedora-40"
+    }
+  },
+  "available_agents": [
+    {
+      "name": "prod-eu-agent",
+      "environment": "prod-eu-west-1",
+      "service_types": ["vm", "container"],
+      "cost": "medium"
+    },
+    {
+      "name": "prod-us-agent",
+      "environment": "prod-us-east-1",
+      "service_types": ["vm", "database"],
+      "cost": "low"
+    }
+  ],
+  "exclude_agents": []
+}`,
+    response: `// After Global policy (priority 1):
+//   patch: { billing_tag: "engineering" }
+//   constraint: { billing_tag: immutable }
+//
+// After Tenant policy (priority 1, sovereignty):
+//   agent_constraint: environment matches "prod-eu-*"
+//   prod-us-agent filtered out
+
+{
+  "rejected": false,
+  "selected_agent": "prod-eu-agent",
+  "patch": {
+    "billing_tag": "engineering"
+  },
+  "constraints": {
+    "billing_tag": { "const": "engineering" }
+  },
+  "agent_constraints": {
+    "environment_constraints": {
+      "patterns": ["prod-eu-.*"]
+    }
+  }
+}`,
+    note: 'Policies are evaluated in order: Global → Tenant → User. Each policy can reject (short-circuit), mutate the spec, constrain fields, or filter agents. Lower-level policies cannot unlock constraints set by higher-level ones.'
+  },
+  5: {
+    title: 'SP Resource Manager: Receive Validated Request',
+    endpoint: 'POST /api/v1/service-type-instances (in-process)',
+    from: 'Placement Manager',
+    to: 'SP Resource Manager',
+    request: `{
+  "agent_name": "prod-eu-agent",
+  "service_type": "vm",
+  "resource_id": "res-x7y8z9",
+  "spec": {
+    "vcpu": 2,
+    "memory": 1024,
+    "storage": 20,
+    "guest_os": "fedora-40",
+    "access": {
+      "ssh_keys": ["ssh-ed25519 AAAA..."]
+    },
+    "billing_tag": "engineering"
+  }
+}`,
+    response: `HTTP/1.1 202 Accepted
+
+{
+  "instance_id": "sti-m4n5o6",
+  "status": "PENDING"
+}`,
+    note: 'The spec now includes the billing_tag mutation applied by the Policy Engine. The SPRM stores the instance record with status PENDING and proceeds to publish the CloudEvent. The Placement Manager updates its record with the instance_id.'
+  },
+  6: {
+    title: 'SPRM: Publish CloudEvent to NATS',
+    endpoint: 'NATS JetStream topic: dcm.agents.prod-eu-agent',
+    from: 'SP Resource Manager',
+    to: 'NATS JetStream',
+    request: `// CloudEvent published to agent's topic
+{
+  "specversion": "1.0",
+  "type": "dcm.request.create",
+  "source": "/dcm/sprm",
+  "id": "evt-p7q8r9",
+  "time": "2026-07-28T10:00:01Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "resource_id": "res-x7y8z9",
+    "instance_id": "sti-m4n5o6",
+    "service_type": "vm",
+    "spec": {
+      "vcpu": 2,
+      "memory": 1024,
+      "storage": 20,
+      "guest_os": "fedora-40",
+      "access": {
+        "ssh_keys": ["ssh-ed25519 AAAA..."]
+      },
+      "billing_tag": "engineering"
+    }
+  }
+}`,
+    response: null,
+    note: 'The CloudEvent is published to the agent\'s deterministic NATS topic. NATS JetStream provides durable delivery — the message persists until the agent acknowledges it. If the agent is temporarily offline, the message is buffered.'
+  },
+  7: {
+    title: 'Agent: Receive & Route Request',
+    endpoint: 'NATS consumer on dcm.agents.prod-eu-agent',
+    from: 'NATS JetStream',
+    to: 'Agent (prod-eu-west-1)',
+    request: `// Agent receives the CloudEvent from main topic
+// Processing steps:
+//
+// 1. Check deny list (from cancel topic)
+//    - resource_id "res-x7y8z9" NOT in deny list ✓
+//
+// 2. Look up service_type "vm"
+//    - KubeVirt SP registered for "vm" ✓
+//
+// 3. Check SP health
+//    - KubeVirt SP status: Ready ✓
+//
+// 4. Route to KubeVirt SP (in-process call)`,
+    response: `// Agent publishes acknowledgment to dcm.agents.responses
+{
+  "specversion": "1.0",
+  "type": "dcm.agent.creation-acknowledged",
+  "source": "/dcm/agent/prod-eu-agent",
+  "data": {
+    "resource_id": "res-x7y8z9",
+    "instance_id": "sti-m4n5o6",
+    "agent_name": "prod-eu-agent",
+    "status": "PROVISIONING"
+  }
+}
+
+// If SP were Unhealthy, agent would instead:
+// 1. Publish to retry topic (hold request)
+// 2. Notify DCM with status: "QUEUED"`,
+    note: 'The agent checks the deny list first (populated from the cancel topic on startup), then looks up which SP handles the requested service_type. If the SP is Ready, the request is routed in-process. If Unhealthy, it goes to the retry topic.'
+  },
+  8: {
+    title: 'KubeVirt SP: Provision VM & Report Status',
+    endpoint: 'In-process (embedded SP)',
+    from: 'Agent',
+    to: 'KubeVirt SP → KubeVirt API',
+    request: `// KubeVirt SP translates the service spec
+// into a KubeVirt VirtualMachine resource:
+
+POST /apis/kubevirt.io/v1/namespaces/dcm-prod/virtualmachines
+
+{
+  "apiVersion": "kubevirt.io/v1",
+  "kind": "VirtualMachine",
+  "metadata": {
+    "name": "res-x7y8z9",
+    "namespace": "dcm-prod",
+    "labels": {
+      "dcm.io/resource-id": "res-x7y8z9",
+      "dcm.io/billing-tag": "engineering"
+    }
+  },
+  "spec": {
+    "running": true,
+    "template": {
+      "spec": {
+        "domain": {
+          "cpu": { "cores": 2 },
+          "memory": { "guest": "1024Mi" },
+          "devices": {
+            "disks": [{ "name": "root", "disk": {} }]
+          }
+        },
+        "volumes": [{
+          "name": "root",
+          "containerDisk": {
+            "image": "fedora-40-cloud"
+          }
+        }]
+      }
+    }
+  }
+}`,
+    response: `// Once VM reaches Running state, agent publishes
+// status update to dcm.agents.responses:
+{
+  "specversion": "1.0",
+  "type": "dcm.agent.creation-acknowledged",
+  "source": "/dcm/agent/prod-eu-agent",
+  "data": {
+    "resource_id": "res-x7y8z9",
+    "instance_id": "sti-m4n5o6",
+    "status": "RUNNING",
+    "outputs": {
+      "ip_address": "10.244.1.15",
+      "ssh_endpoint": "10.244.1.15:22"
+    }
+  }
+}
+
+// Status propagation:
+// SP → Agent → NATS (dcm.agents.responses)
+//   → SPRM (update DB) → Status Consumer
+//     → Placement Manager (trigger next DAG level)`,
+    note: 'The SP translates the platform-agnostic service spec into provider-specific API calls. Output values (like ip_address) flow back through NATS and become available for CEL expressions in dependent resources.'
+  }
+  },
+
+  catalog: {
+  1: {
+    title: 'Admin Submits CatalogItem Blueprint',
+    endpoint: 'POST /api/v1/catalog-items',
+    from: 'Admin',
+    to: 'Catalog Manager',
+    request: `{
+  "api_version": "v1alpha1",
+  "kind": "CatalogItem",
+  "metadata": {
+    "name": "dev-container-db",
+    "display_name": "Dev Application Stack"
+  },
+  "spec": {
+    "resources": [
+      {
+        "name": "ordersDb",
+        "service_type": "database",
+        "requires_resources": [],
+        "fields": [
+          {
+            "path": "engine",
+            "editable": true,
+            "default": "postgres",
+            "validation_schema": {
+              "enum": ["postgres", "mysql"]
+            }
+          },
+          {
+            "path": "version",
+            "editable": true,
+            "default": "16",
+            "depends_on": {
+              "path": "engine",
+              "allowed_values": {
+                "postgres": ["14", "15", "16", "17"],
+                "mysql": ["8.0"]
+              }
+            }
+          },
+          { "path": "resources.cpu", "default": 1 },
+          { "path": "resources.memory", "default": "512MB" }
+        ]
+      },
+      {
+        "name": "app",
+        "service_type": "container",
+        "requires_resources": ["ordersDb"],
+        "fields": [
+          {
+            "path": "image.reference",
+            "editable": false,
+            "default": "registry.example.com/orders-api:1.0"
+          },
+          {
+            "path": "process.env[0].value",
+            "default": "\${ordersDb.connection_string}"
+          },
+          { "path": "network.ports[0].container_port", "default": 8080 }
+        ]
+      }
+    ]
+  }
+}`,
+    response: `HTTP/1.1 201 Created
+
+{
+  "catalog_item_id": "dev-container-db",
+  "api_version": "v1alpha1",
+  "metadata": {
+    "name": "dev-container-db",
+    "display_name": "Dev Application Stack"
+  }
+}`,
+    note: 'The CatalogItem is a blueprint — no infrastructure is provisioned yet. It defines what resources exist, their defaults, what users can override, and dependencies between them. The "requires_resources" field builds the DAG, and CEL expressions like ${ordersDb.connection_string} wire outputs between resources.'
+  },
+  2: {
+    title: 'Catalog Manager Validates the Blueprint',
+    endpoint: 'Internal validation (Catalog Manager)',
+    from: 'Catalog Manager',
+    to: 'Catalog Manager (internal)',
+    request: `// Catalog Manager validation checks:
+
+// 1. Service type existence
+//    "database" exists in service type registry? ✓
+//    "container" exists in service type registry? ✓
+
+// 2. Field path validation
+//    "engine" is valid path in database schema? ✓
+//    "image.reference" is valid path in container schema? ✓
+
+// 3. validation_schema is valid JSON Schema (draft 2020-12)?
+//    { "enum": ["postgres", "mysql"] } ✓
+
+// 4. depends_on references valid paths?
+//    "version" depends on "engine" — "engine" exists ✓
+
+// 5. No duplicate resource names?
+//    "ordersDb", "app" — unique ✓
+
+// 6. requires_resources references valid names?
+//    app requires ["ordersDb"] — "ordersDb" exists ✓
+
+// 7. Dependency graph is acyclic?
+//    ordersDb → app (no cycles) ✓`,
+    response: null,
+    note: 'If any validation fails, the request is rejected with a descriptive error. The validation_schema uses JSON Schema draft 2020-12 and supports numeric constraints (min/max), string patterns, enums, and conditional logic (if/then/else).'
+  },
+  3: {
+    title: 'CatalogItem Available in Self-Service Portal',
+    endpoint: 'GET /api/v1/catalog-items',
+    from: 'Self-Service Portal',
+    to: 'Catalog Manager',
+    request: `// Users can now browse and instantiate the catalog item.
+// The portal fetches available items:
+
+GET /api/v1/catalog-items
+
+// User sees "Dev Application Stack" with editable fields:
+//   ordersDb.engine: [postgres, mysql] (default: postgres)
+//   ordersDb.version: [14, 15, 16, 17] (default: 16)
+//     ↳ choices change based on engine selection (depends_on)
+//   ordersDb.resources.cpu: (default: 1)
+//   ordersDb.resources.memory: (default: 512MB)
+//
+// Non-editable fields are hidden or grayed out:
+//   app.image.reference: locked to registry.example.com/orders-api:1.0`,
+    response: `// When user instantiates, they submit overrides:
+
+POST /api/v1alpha1/catalog-item-instances
+{
+  "catalog_item_id": "dev-container-db",
+  "user_values": [
+    { "resource": "ordersDb", "path": "version", "value": "17" },
+    { "resource": "ordersDb", "path": "resources.cpu", "value": 2 }
+  ]
+}
+
+// This triggers the placement flow (see "User Requests VM" tab)`,
+    note: 'The depends_on mechanism provides dynamic form behavior: when the user selects engine=mysql, the version dropdown updates to show only ["8.0"]. Non-editable fields use the blueprint defaults and cannot be overridden.'
+  }
+  },
+
+  'agent-reg': {
+  1: {
+    title: 'Agent Starts in Target Environment',
+    endpoint: 'Agent binary startup',
+    from: 'Operator',
+    to: 'Agent process',
+    request: `// Agent loads its configuration file:
+{
+  "agent_name": "prod-eu-agent",
+  "environment": "prod-eu-west-1",
+  "dcm_endpoint": "https://dcm.example.com",
+  "nats_url": "nats://nats.example.com:4222",
+  "cost": "medium",
+  "embedded_providers": [
+    { "name": "kubevirt", "type": "vm", "enabled": true },
+    { "name": "k8s-container", "type": "container", "enabled": true },
+    { "name": "acm-cluster", "type": "cluster", "enabled": false }
+  ]
+}`,
+    response: null,
+    note: 'The agent is a lightweight process deployed in each target environment. It can run in air-gapped datacenters, regional zones, edge locations, or ships. Configuration determines which embedded SPs are active.'
+  },
+  2: {
+    title: 'Embedded SPs Register In-Process',
+    endpoint: 'Internal (no REST call)',
+    from: 'Agent',
+    to: 'Embedded Service Providers',
+    request: `// Agent registers each enabled embedded SP internally:
+
+// 1. KubeVirt SP (type: "vm") — enabled: true
+//    → Register in-process, claim service type "vm" ✓
+//    → In-process health check: Ready ✓
+
+// 2. K8s Container SP (type: "container") — enabled: true
+//    → Register in-process, claim service type "container" ✓
+//    → In-process health check: Ready ✓
+
+// 3. ACM Cluster SP (type: "cluster") — enabled: false
+//    → Skipped (not enabled in config)
+
+// Service type uniqueness enforced:
+//   If an external SP already occupies "vm" from a prior
+//   session, the embedded KubeVirt SP is skipped with a
+//   warning. External SP retains the slot.`,
+    response: `// Agent's internal SP registry after startup:
+{
+  "providers": [
+    {
+      "name": "kubevirt",
+      "service_type": "vm",
+      "type": "embedded",
+      "status": "Ready"
+    },
+    {
+      "name": "k8s-container",
+      "service_type": "container",
+      "type": "embedded",
+      "status": "Ready"
+    }
+  ],
+  "supported_service_types": ["vm", "container"]
+}`,
+    note: 'Embedded SPs are compiled into the agent binary. They register without any network call and use in-process health checks. At least one SP must be registered and healthy before the agent can register with DCM.'
+  },
+  3: {
+    title: 'Agent Creates NATS Topics',
+    endpoint: 'NATS JetStream',
+    from: 'Agent',
+    to: 'NATS JetStream',
+    request: `// Agent creates three deterministic topics:
+
+// 1. Main topic (DCM → Agent: creation/deletion requests)
+Topic: "dcm.agents.prod-eu-agent"
+
+// 2. Retry topic (Agent-internal: held while SP unhealthy)
+Topic: "dcm.agents.prod-eu-agent.retry"
+
+// 3. Cancel topic (DCM → Agent: cancellation signals)
+Topic: "dcm.agents.prod-eu-agent.cancel"
+
+// Topics are durable (JetStream) — messages persist
+// across agent restarts. Topic names are deterministic
+// so the same topics are reused after restart.`,
+    response: null,
+    note: 'The three-topic architecture enables health-aware routing. The main topic receives requests, the retry topic holds them during SP outages, and the cancel topic prevents duplicate processing when requests are re-routed to other agents.'
+  },
+  4: {
+    title: 'Agent Self-Registers with DCM Control Plane',
+    endpoint: 'POST /api/v1/agents',
+    from: 'Agent',
+    to: 'DCM Control Plane (Catalog Manager)',
+    request: `{
+  "name": "prod-eu-agent",
+  "environment": "prod-eu-west-1",
+  "service_types": ["vm", "container"],
+  "resources_available": {
+    "total_cpu": 200,
+    "total_memory": "1TB",
+    "total_storage": "2TB"
+  },
+  "cost": "medium",
+  "topic_name": "dcm.agents.prod-eu-agent"
+}`,
+    response: `HTTP/1.1 201 Created
+
+{
+  "agent_id": "agent-uuid-a1b2c3",
+  "name": "prod-eu-agent",
+  "environment": "prod-eu-west-1",
+  "service_types": ["vm", "container"],
+  "cost": "medium",
+  "topic_name": "dcm.agents.prod-eu-agent"
+}
+
+// On restart (re-registration with same name):
+// DCM returns same agent_id (idempotent by name).
+// Heartbeat timer resets. "Unavailable" status clears.`,
+    note: 'The agent uses its "name" as a natural key for idempotent registration. On restart, the same POST call updates the existing entry and returns the same agent_id. This avoids the need to persist agent_id locally.'
+  },
+  5: {
+    title: 'Agent Sends Periodic Heartbeats',
+    endpoint: 'PUT /api/v1/agents/{agent_id}/heartbeat',
+    from: 'Agent',
+    to: 'DCM Control Plane',
+    request: `PUT /api/v1/agents/agent-uuid-a1b2c3/heartbeat
+
+{
+  "timestamp": "2026-07-28T10:00:30Z",
+  "consumer_lag": 3
+}
+
+// Sent every N seconds (configurable interval)
+// consumer_lag = pending messages on agent's NATS topic`,
+    response: `HTTP/1.1 200 OK
+
+// DCM-side monitoring logic:
+//
+// consumer_lag >= threshold → Mark agent "Congested"
+//   (stop routing new requests to this agent)
+//
+// consumer_lag < threshold → Clear "Congested" status
+//
+// No heartbeat within timeout → Mark agent "Unavailable"
+//   (remove from available agents pool entirely)
+//
+// Re-registration after restart → Reset heartbeat timer`,
+    note: 'Heartbeats serve two purposes: health detection (is the agent alive?) and congestion detection (is it overwhelmed?). The consumer_lag metric lets DCM avoid routing to agents that are falling behind on processing.'
+  }
+  },
+
+  'agent-cap': {
+  1: {
+    title: 'External SP Registers with Agent',
+    endpoint: 'POST /api/v1/providers (on Agent)',
+    from: 'External Service Provider',
+    to: 'Agent',
+    request: `POST /api/v1/providers
+Host: prod-eu-agent.local:8080
+
+{
+  "name": "postgres-provider",
+  "endpoint": "https://pg-sp.example.com/api/v1/database",
+  "service_type": "database",
+  "display_name": "PostgreSQL Service Provider",
+  "metadata": {
+    "region": "eu-west-1",
+    "resources": {
+      "total_cpu": 64,
+      "total_memory": "256GB",
+      "total_storage": "4TB"
+    }
+  }
+}`,
+    response: `HTTP/1.1 201 Created
+
+{
+  "id": "sp-uuid-d4e5f6",
+  "name": "postgres-provider",
+  "service_type": "database",
+  "status": "registered"
+}
+
+// If service type "database" already occupied:
+// HTTP/1.1 409 Conflict
+// { "error": "service type 'database' is already served
+//    by provider 'other-db-provider'" }`,
+    note: 'External SPs are standalone processes that register via REST. Only one SP per service type per agent is allowed. On SP restart, re-registering with the same name updates the existing entry (idempotent). A different name for the same service type returns 409 Conflict.'
+  },
+  2: {
+    title: 'Agent Stores Registration & Starts Health Checks',
+    endpoint: 'Internal (Agent)',
+    from: 'Agent',
+    to: 'Agent internal registry',
+    request: `// Agent updates its internal provider registry:
+{
+  "providers": [
+    { "name": "kubevirt", "type": "embedded",
+      "service_type": "vm", "status": "Ready" },
+    { "name": "k8s-container", "type": "embedded",
+      "service_type": "container", "status": "Ready" },
+    { "name": "postgres-provider", "type": "external",
+      "service_type": "database", "status": "Ready",
+      "endpoint": "https://pg-sp.example.com/api/v1/database" }
+  ]
+}
+
+// Agent starts periodic health polling for external SP:
+// GET https://pg-sp.example.com/health
+// Interval: configurable (e.g., every 30 seconds)
+// Expected response: { "status": "healthy" }`,
+    response: `// Agent's updated capability list:
+{
+  "supported_service_types": ["vm", "container", "database"]
+}
+
+// Capability changed from ["vm", "container"]
+// to ["vm", "container", "database"]
+// → Agent must notify DCM (next step)`,
+    note: 'Embedded SPs use in-process health checks (no network call). External SPs are polled via GET /health. The agent maintains a three-state health model: Ready (route requests), Unhealthy (hold in retry topic), Unavailable (remove service type from DCM).'
+  },
+  3: {
+    title: 'Agent Updates DCM with New Capabilities',
+    endpoint: 'POST /api/v1/agents',
+    from: 'Agent',
+    to: 'DCM Control Plane',
+    request: `// service_types list changed → Agent re-registers with DCM
+
+POST /api/v1/agents
+{
+  "name": "prod-eu-agent",
+  "environment": "prod-eu-west-1",
+  "service_types": ["vm", "container", "database"],
+  "resources_available": {
+    "total_cpu": 264,
+    "total_memory": "1.25TB",
+    "total_storage": "6TB"
+  },
+  "cost": "medium",
+  "topic_name": "dcm.agents.prod-eu-agent"
+}`,
+    response: `HTTP/1.1 200 OK
+
+{
+  "agent_id": "agent-uuid-a1b2c3",
+  "service_types": ["vm", "container", "database"]
+}
+
+// DCM now knows this agent can handle "database"
+// requests. Policy Engine will include this agent
+// in available_agents for database service type.`,
+    note: 'This is the same POST /api/v1/agents endpoint used for initial registration (idempotent by name). The key change is the updated service_types array. DCM updates the Agent Registry so the Policy Engine can now route database requests to this agent.'
+  },
+  4: {
+    title: 'SP Health Changes Update Capabilities',
+    endpoint: 'POST /api/v1/agents (on health state change)',
+    from: 'Agent',
+    to: 'DCM Control Plane',
+    request: `// Scenario A: SP becomes Unhealthy
+// Agent keeps "database" in service_types (no DCM update)
+// Requests for "database" held in retry topic
+// Agent publishes health warning:
+→ Topic: dcm.agents.health
+{
+  "type": "service-type-degraded",
+  "agent_name": "prod-eu-agent",
+  "service_type": "database",
+  "reason": "health check timeout"
+}
+
+// Scenario B: SP becomes Unavailable
+// Agent REMOVES "database" from service_types
+→ POST /api/v1/agents
+{
+  "name": "prod-eu-agent",
+  "service_types": ["vm", "container"],
+  ...
+}
+// Retry topic: held "database" requests rejected
+
+// Scenario C: SP recovers
+// Agent RE-ADDS "database" to service_types
+→ POST /api/v1/agents
+{
+  "name": "prod-eu-agent",
+  "service_types": ["vm", "container", "database"],
+  ...
+}
+// Retry topic: held requests reprocessed`,
+    response: null,
+    note: 'The key distinction: Unhealthy keeps the service type advertised (temporary degradation, may recover), while Unavailable removes it (permanent loss, DCM stops routing). This prevents requests from being sent to agents that can never fulfill them.'
+  }
+  }
+};
+
+function showStepDetail(flowId, num) {
+  var d = allStepDetails[flowId][num];
+  var html = '<div class="step-detail-title"><div class="step-num">' + num + '</div>' + d.title + '</div>';
+  html += '<p style="font-size:12px; color:#888; margin-bottom:4px;"><strong>' + d.from + '</strong> → <strong>' + d.to + '</strong></p>';
+  html += '<p style="font-size:12px; color:#888; margin-bottom:12px;"><code>' + d.endpoint + '</code></p>';
+  html += '<div class="payload-label">Request / Action</div>';
+  html += '<div class="payload-block">' + escapeHtml(d.request) + '</div>';
+  if (d.response) {
+    html += '<div class="payload-label">Response / Result</div>';
+    html += '<div class="payload-block">' + escapeHtml(d.response) + '</div>';
+  }
+  if (d.note) {
+    html += '<p class="payload-note">' + d.note + '</p>';
+  }
+  document.getElementById('step-detail-content').innerHTML = html;
+  var panel = document.getElementById('step-detail-panel');
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideStepDetail() {
+  document.getElementById('step-detail-panel').style.display = 'none';
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function showView(viewId) {
+  hideStepDetail();
+  document.querySelectorAll('.view').forEach(function(v) {
+    v.classList.remove('active');
+  });
+  document.getElementById('view-' + viewId).classList.add('active');
+
+  var bc = document.getElementById('breadcrumb');
+  var titles = {
+    overview: 'Overview',
+    portal: 'Self-Service Portal',
+    policies: 'Policy Engine',
+    placement: 'Placement Manager',
+    agents: 'Agents & Service Providers',
+    catalog: 'Catalog & Service Types',
+    rehydration: 'Rehydration Flow',
+    'agent-routing': 'Agent Request Routing'
+  };
+  var parents = {
+    rehydration: { id: 'placement', label: 'Placement Manager' },
+    'agent-routing': { id: 'agents', label: 'Agents & Service Providers' }
+  };
+
+  if (viewId === 'overview') {
+    bc.innerHTML = '<span class="current">Overview</span>';
+  } else if (parents[viewId]) {
+    var p = parents[viewId];
+    bc.innerHTML =
+      '<a onclick="showView(\'overview\')">Overview</a>' +
+      '<span class="sep">/</span>' +
+      '<a onclick="showView(\'' + p.id + '\')">' + p.label + '</a>' +
+      '<span class="sep">/</span>' +
+      '<span class="current">' + titles[viewId] + '</span>';
+  } else {
+    bc.innerHTML =
+      '<a onclick="showView(\'overview\')">Overview</a>' +
+      '<span class="sep">/</span>' +
+      '<span class="current">' + titles[viewId] + '</span>';
+  }
+
+  window.scrollTo(0, 0);
+}
+</script>
+
+</body>
+</html>
